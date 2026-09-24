@@ -1,0 +1,24 @@
+services:
+###> doctrine/doctrine-bundle ###
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      # Politique SQL Server : 8+ caractères avec majuscules, minuscules, chiffres ou symboles
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-!ChangeMe!Sa1}
+      MSSQL_PID: Developer
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - database_data:/var/opt/mssql:rw
+      - ./docker/mssql/init.sql:/docker/init.sql:ro
+###< doctrine/doctrine-bundle ###
+
+volumes:
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###
