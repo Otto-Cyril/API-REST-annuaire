@@ -140,21 +140,13 @@ class PersonnelDeGardeController extends AbstractApiController
 
     private function applyRelations(PersonnelDeGarde $personnel, Request $request): void
     {
-        $data = json_decode($request->getContent(), true) ?? [];
+        $data = $this->requestData($request);
 
-        if (\array_key_exists('serviceId', $data)) {
-            $service = $this->serviceRepository->find($data['serviceId']);
-            if (null === $service) {
-                throw new BadRequestHttpException('serviceId invalide.');
-            }
+        if (null !== $service = $this->findRelation($data, 'serviceId', $this->serviceRepository)) {
             $personnel->setService($service);
         }
 
-        if (\array_key_exists('metierId', $data)) {
-            $metier = $this->metierRepository->find($data['metierId']);
-            if (null === $metier) {
-                throw new BadRequestHttpException('metierId invalide.');
-            }
+        if (null !== $metier = $this->findRelation($data, 'metierId', $this->metierRepository)) {
             $personnel->setMetier($metier);
         }
     }

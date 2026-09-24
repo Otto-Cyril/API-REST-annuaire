@@ -57,6 +57,40 @@ abstract class AbstractApiController extends AbstractController
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function requestData(Request $request): array
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            throw new BadRequestHttpException('Corps de requête JSON invalide.');
+        }
+
+        return $data;
+    }
+
+    /**
+     * Résout une relation à partir d'un identifiant reçu en entrée (ex. serviceId).
+     * Retourne null si la clé est absente ; 400 si la valeur n'est pas un identifiant valide ou introuvable.
+     *
+     * @param array<string, mixed> $data
+     */
+    protected function findRelation(array $data, string $key, ObjectRepository $repository): ?object
+    {
+        if (!\array_key_exists($key, $data)) {
+            return null;
+        }
+
+        $id = \is_bool($data[$key]) ? false : filter_var($data[$key], \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 2147483647]]);
+        $entity = false === $id ? null : $repository->find($id);
+        if (null === $entity) {
+            throw new BadRequestHttpException(sprintf('%s invalide.', $key));
+        }
+
+        return $entity;
+    }
+
     protected function validateOrFail(object $entity): void
     {
         $violations = $this->getValidator()->validate($entity);

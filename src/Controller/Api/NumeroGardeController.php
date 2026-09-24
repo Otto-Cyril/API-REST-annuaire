@@ -10,7 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -92,13 +91,9 @@ class NumeroGardeController extends AbstractApiController
 
     private function applyRelations(NumeroGarde $numeroGarde, Request $request): void
     {
-        $data = json_decode($request->getContent(), true) ?? [];
+        $data = $this->requestData($request);
 
-        if (\array_key_exists('personnelDeGardeId', $data)) {
-            $personnel = $this->personnelRepository->find($data['personnelDeGardeId']);
-            if (null === $personnel) {
-                throw new BadRequestHttpException('personnelDeGardeId invalide.');
-            }
+        if (null !== $personnel = $this->findRelation($data, 'personnelDeGardeId', $this->personnelRepository)) {
             $numeroGarde->setPersonnelDeGarde($personnel);
         }
     }
