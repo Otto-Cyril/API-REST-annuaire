@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useAuth } from './stores/auth'
 import { resources } from './resources'
 import { theme, toggleTheme } from './theme'
-import logo from './assets/logo-imm-negatif.png'
+import logo from './assets/logo-imm-negatif.svg'
 import UrgenceBar from './components/UrgenceBar.vue'
 
 const auth = useAuth()
