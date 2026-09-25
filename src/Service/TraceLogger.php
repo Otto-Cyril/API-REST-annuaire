@@ -14,6 +14,21 @@ class TraceLogger
     ) {
     }
 
+    /**
+     * Exécute $operation (écriture + appels à log()) dans une seule transaction :
+     * si la trace ne peut pas être enregistrée, la modification est annulée.
+     *
+     * @template T
+     *
+     * @param callable(): T $operation
+     *
+     * @return T
+     */
+    public function transactional(callable $operation): mixed
+    {
+        return $this->entityManager->wrapInTransaction($operation);
+    }
+
     public function log(string $actionRealise): void
     {
         $trace = new Trace();

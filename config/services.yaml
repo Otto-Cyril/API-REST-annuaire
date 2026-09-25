@@ -43,3 +43,5 @@ services:
             $searchPassword: '%env(LDAP_SEARCH_PASSWORD)%'
             $userQuery: '%env(LDAP_USER_QUERY)%'
             $adminGroupDn: '%env(LDAP_ADMIN_GROUP_DN)%'
+            $loginUserLimiter: '@limiter.login_user'
+            $loginIpLimiter: '@limiter.login_ip'

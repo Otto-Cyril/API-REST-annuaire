@@ -2,6 +2,7 @@
 
 namespace App\EventSubscriber;
 
+use App\Exception\ValidationFailedException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -39,6 +40,15 @@ class ExceptionSubscriber implements EventSubscriberInterface
             $event->setResponse(new JsonResponse([
                 'message' => 'Opération impossible : cette ressource est encore référencée par d\'autres données.',
             ], Response::HTTP_CONFLICT));
+
+            return;
+        }
+
+        if ($exception instanceof ValidationFailedException) {
+            $event->setResponse(new JsonResponse([
+                'message' => $exception->getMessage(),
+                'errors' => $exception->getErrors(),
+            ], $exception->getStatusCode()));
 
             return;
         }

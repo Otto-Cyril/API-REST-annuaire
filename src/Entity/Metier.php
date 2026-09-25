@@ -26,7 +26,13 @@ class Metier
     #[Assert\NotBlank]
     #[Assert\Length(max: 50)]
     #[Groups(['metier:read', 'metier:write'])]
-    private ?string $username = null;
+    private ?string $nom = null;
+
+    #[ORM\Column(length: 50)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 50)]
+    #[Groups(['metier:read', 'metier:write'])]
+    private ?string $prenom = null;
 
     public function getId(): ?int
     {
@@ -45,14 +51,26 @@ class Metier
         return $this;
     }
 
-    public function getUsername(): ?string
+    public function getNom(): ?string
     {
-        return $this->username;
+        return $this->nom;
     }
 
-    public function setUsername(?string $username): static
+    public function setNom(?string $nom): static
     {
-        $this->username = $username;
+        $this->nom = $nom;
+
+        return $this;
+    }
+
+    public function getPrenom(): ?string
+    {
+        return $this->prenom;
+    }
+
+    public function setPrenom(?string $prenom): static
+    {
+        $this->prenom = $prenom;
 
         return $this;
     }

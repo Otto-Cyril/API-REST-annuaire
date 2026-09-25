@@ -26,10 +26,11 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login$, roles: PUBLIC_ACCESS }
         - { path: ^/api/traces, roles: ROLE_ADMIN }
-        - { path: ^/api/(services|metiers|personnel|numeros-garde|numeros-urgence), methods: [POST, PUT, PATCH, DELETE], roles: ROLE_ADMIN }
-        - { path: ^/api, roles: PUBLIC_ACCESS }
+        - { path: ^/api, methods: [GET, HEAD, OPTIONS], roles: PUBLIC_ACCESS }
+        # Tout le reste (écritures, futures routes) exige un JWT admin : approche fermée par défaut.
+        - { path: ^/api, roles: ROLE_ADMIN }
 
 when@test:
     security:

@@ -43,6 +43,12 @@ class PersonnelDeGardeController extends AbstractApiController
         return $this->validator;
     }
 
+    /**
+     * Recherche et liste paginée des personnels de garde (avec service, métier et numéros de garde).
+     * Public (GET). Paramètres : q (recherche par mots sur libellé du personnel, service, localisation, métier ; 50 car. max),
+     * serviceId et metierId (filtres), page (défaut 1), limit (défaut 20, max 100).
+     * Renvoie 200 et les en-têtes X-Total-Count, X-Page, X-Per-Page, X-Total-Pages ; 400 si un paramètre est invalide.
+     */
     #[Route('', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
@@ -51,11 +57,7 @@ class PersonnelDeGardeController extends AbstractApiController
             throw new BadRequestHttpException('q ne doit pas dépasser 50 caractères.');
         }
 
-        $page = $this->queryId($request, 'page') ?? 1;
-        $limit = $this->queryId($request, 'limit') ?? self::DEFAULT_LIMIT;
-        if ($limit > self::MAX_LIMIT) {
-            throw new BadRequestHttpException(sprintf('limit ne doit pas dépasser %d.', self::MAX_LIMIT));
-        }
+        [$page, $limit] = $this->pagination($request, self::DEFAULT_LIMIT, self::MAX_LIMIT);
 
         $result = $this->repository->search(
             '' === $q ? null : $q,
@@ -65,39 +67,25 @@ class PersonnelDeGardeController extends AbstractApiController
             $limit,
         );
 
-        $response = $this->jsonResource(iterator_to_array($result), Response::HTTP_OK, ['personnel:read']);
-        $total = \count($result);
-        $response->headers->add([
-            'X-Total-Count' => $total,
-            'X-Page' => $page,
-            'X-Per-Page' => $limit,
-            'X-Total-Pages' => max(1, (int) ceil($total / $limit)),
-        ]);
-
-        return $response;
+        return $this->paginatedResponse($result, $page, $limit, ['personnel:read']);
     }
 
-    private function queryId(Request $request, string $name): ?int
-    {
-        $value = $request->query->get($name);
-        if (null === $value || '' === $value) {
-            return null;
-        }
-
-        $id = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        if (false === $id) {
-            throw new BadRequestHttpException(sprintf('%s invalide.', $name));
-        }
-
-        return $id;
-    }
-
-    #[Route('/{id}', methods: ['GET'])]
+    /**
+     * Renvoie le personnel de garde dont l'id est donné dans l'URL.
+     * Public (GET). 200 si trouvé, 404 sinon.
+     */
+    #[Route('/{id}', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
         return $this->jsonResource($this->findOrFail($this->repository, $id), Response::HTTP_OK, ['personnel:read']);
     }
 
+    /**
+     * Crée un personnel de garde à partir du corps JSON.
+     * Champs modifiables : libelle ; serviceId et metierId (ids du service et du métier, obligatoires à la création, 400 si introuvables).
+     * ROLE_ADMIN requis (JWT). 201 avec la ressource créée ; 400 si JSON/types invalides, 422 si validation échoue.
+     * Enregistre une trace « Création … » dans la même transaction.
+     */
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
@@ -105,14 +93,22 @@ class PersonnelDeGardeController extends AbstractApiController
         $this->applyRelations($personnel, $request);
         $this->validateOrFail($personnel);
 
-        $this->entityManager->persist($personnel);
-        $this->entityManager->flush();
-        $this->traceLogger->log(sprintf('Création du personnel de garde #%d', $personnel->getId()));
+        $this->traceLogger->transactional(function () use ($personnel) {
+            $this->entityManager->persist($personnel);
+            $this->entityManager->flush();
+            $this->traceLogger->log(sprintf('Création du personnel de garde #%d', $personnel->getId()));
+        });
 
         return $this->jsonResource($personnel, Response::HTTP_CREATED, ['personnel:read']);
     }
 
-    #[Route('/{id}', methods: ['PUT', 'PATCH'])]
+    /**
+     * Met à jour le personnel de garde d'id donné avec le corps JSON (mise à jour partielle : seuls les champs envoyés changent, PUT et PATCH sont équivalents).
+     * Champs modifiables : libelle ; serviceId et metierId (ids du service et du métier, obligatoires à la création, 400 si introuvables).
+     * ROLE_ADMIN requis (JWT). 200 avec la ressource modifiée ; 404 si introuvable ; 400 si JSON/types invalides ; 422 si validation échoue.
+     * Enregistre une trace « Modification … » dans la même transaction.
+     */
+    #[Route('/{id}', requirements: ['id' => '\d+'], methods: ['PUT', 'PATCH'])]
     public function update(int $id, Request $request): JsonResponse
     {
         $personnel = $this->findOrFail($this->repository, $id);
@@ -120,20 +116,29 @@ class PersonnelDeGardeController extends AbstractApiController
         $this->applyRelations($personnel, $request);
         $this->validateOrFail($personnel);
 
-        $this->entityManager->flush();
-        $this->traceLogger->log(sprintf('Modification du personnel de garde #%d', $personnel->getId()));
+        $this->traceLogger->transactional(function () use ($personnel) {
+            $this->entityManager->flush();
+            $this->traceLogger->log(sprintf('Modification du personnel de garde #%d', $personnel->getId()));
+        });
 
         return $this->jsonResource($personnel, Response::HTTP_OK, ['personnel:read']);
     }
 
-    #[Route('/{id}', methods: ['DELETE'])]
+    /**
+     * Supprime le personnel de garde d'id donné. Supprime aussi ses numéros de garde (cascade).
+     * ROLE_ADMIN requis (JWT). 204 sans contenu ; 404 si introuvable ; 409 si la ressource est encore référencée ailleurs.
+     * Enregistre une trace « Suppression … » dans la même transaction.
+     */
+    #[Route('/{id}', requirements: ['id' => '\d+'], methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
     {
         $personnel = $this->findOrFail($this->repository, $id);
 
-        $this->entityManager->remove($personnel);
-        $this->entityManager->flush();
-        $this->traceLogger->log(sprintf('Suppression du personnel de garde #%d', $id));
+        $this->traceLogger->transactional(function () use ($id, $personnel) {
+            $this->entityManager->remove($personnel);
+            $this->entityManager->flush();
+            $this->traceLogger->log(sprintf('Suppression du personnel de garde #%d', $id));
+        });
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }

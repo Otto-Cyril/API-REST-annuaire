@@ -20,3 +20,8 @@
 /.postman/
 /postman/
 ###< local / secrets ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###

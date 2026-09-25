@@ -2,12 +2,16 @@
 
 namespace App\Controller\Api;
 
+use App\Exception\ValidationFailedException;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ObjectRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -27,7 +31,8 @@ abstract class AbstractApiController extends AbstractController
 
     protected function findOrFail(ObjectRepository $repository, int $id): object
     {
-        $entity = $repository->find($id);
+        // Au-delà de INT (SQL Server) aucun enregistrement ne peut exister ; évite une erreur SQL 500.
+        $entity = $id < 1 || $id > 2147483647 ? null : $repository->find($id);
         if (null === $entity) {
             throw new NotFoundHttpException('Ressource introuvable.');
         }
@@ -54,6 +59,9 @@ abstract class AbstractApiController extends AbstractController
             return $this->getSerializer()->deserialize($request->getContent(), $class, 'json', $context);
         } catch (NotEncodableValueException) {
             throw new BadRequestHttpException('Corps de requête JSON invalide.');
+        } catch (SerializerExceptionInterface) {
+            // Ex. type incorrect ({"libelle": 123}) ou corps JSON scalaire.
+            throw new BadRequestHttpException('Corps de requête invalide : types de données incorrects.');
         }
     }
 
@@ -91,16 +99,63 @@ abstract class AbstractApiController extends AbstractController
         return $entity;
     }
 
+    protected function queryId(Request $request, string $name): ?int
+    {
+        $value = $request->query->get($name);
+        if (null === $value || '' === $value) {
+            return null;
+        }
+
+        $id = filter_var($value, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 2147483647]]);
+        if (false === $id) {
+            throw new BadRequestHttpException(sprintf('%s invalide.', $name));
+        }
+
+        return $id;
+    }
+
+    /**
+     * @return array{0: int, 1: int} [page, limit]
+     */
+    protected function pagination(Request $request, int $defaultLimit, int $maxLimit): array
+    {
+        $page = $this->queryId($request, 'page') ?? 1;
+        $limit = $this->queryId($request, 'limit') ?? $defaultLimit;
+        if ($limit > $maxLimit) {
+            throw new BadRequestHttpException(sprintf('limit ne doit pas dépasser %d.', $maxLimit));
+        }
+
+        return [$page, $limit];
+    }
+
+    /**
+     * @param Paginator<object> $result
+     * @param string[]          $groups
+     */
+    protected function paginatedResponse(Paginator $result, int $page, int $limit, array $groups): JsonResponse
+    {
+        $response = $this->jsonResource(iterator_to_array($result), Response::HTTP_OK, $groups);
+        $total = \count($result);
+        $response->headers->add([
+            'X-Total-Count' => $total,
+            'X-Page' => $page,
+            'X-Per-Page' => $limit,
+            'X-Total-Pages' => max(1, (int) ceil($total / $limit)),
+        ]);
+
+        return $response;
+    }
+
     protected function validateOrFail(object $entity): void
     {
         $violations = $this->getValidator()->validate($entity);
         if (\count($violations) > 0) {
             $errors = [];
             foreach ($violations as $violation) {
-                $errors[$violation->getPropertyPath()] = $violation->getMessage();
+                $errors[$violation->getPropertyPath()][] = $violation->getMessage();
             }
 
-            throw new BadRequestHttpException(json_encode($errors, \JSON_UNESCAPED_UNICODE));
+            throw new ValidationFailedException($errors);
         }
     }
 }

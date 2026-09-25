@@ -8,6 +8,18 @@ framework:
     #esi: true
     #fragments: true
 
+    # Limitation des tentatives de connexion (voir App\Security\LdapAuthenticator).
+    # Appliquée avant toute requête LDAP : les échecs sont donc bien comptés.
+    rate_limiter:
+        login_user: # par IP + identifiant : bloque le brute-force d'un compte
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'
+        login_ip: # par IP : bloque le balayage de nombreux comptes
+            policy: fixed_window
+            limit: 30
+            interval: '15 minutes'
+
 when@test:
     framework:
         test: true
