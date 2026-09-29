@@ -123,9 +123,9 @@ watch(cfg, (c) => c && (document.title = pageTitle(`${c.title} (admin)`)), { imm
           <option v-for="o in options[f.options] ?? []" :key="o.id" :value="o.id">{{ o[f.optionLabel] }}</option>
         </select>
         <input v-else v-model="form[f.key]" :type="f.type ?? 'text'" :maxlength="f.max" :required="!f.optional" />
-        <small v-for="m in fieldErrors[f.key] ?? []" :key="m" class="error">{{ m }}</small>
+        <small v-for="m in fieldErrors[f.key] ?? []" :key="m" class="error" role="alert">{{ m }}</small>
       </label>
-      <p v-if="formError" class="error">{{ formError }}</p>
+      <p v-if="formError" class="error" role="alert">{{ formError }}</p>
       <div class="actions">
         <button class="primary" :disabled="saving">Enregistrer</button>
         <button type="button" @click="editing = null">Annuler</button>
