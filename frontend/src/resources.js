@@ -61,6 +61,7 @@ export const resources = {
     title: 'Annuaire du personnel',
     path: '/personnes',
     paginated: true,
+    hideFromMenu: true, // absent du menu « Administration » (la page reste accessible en /admin/personnes)
     columns: [
       { key: 'nom', label: 'Nom' },
       { key: 'prenom', label: 'Prénom' },

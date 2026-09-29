@@ -6,10 +6,14 @@ import { resources } from './resources'
 import { theme, toggleTheme } from './theme'
 import logo from './assets/logo-imm-negatif.svg'
 import UrgenceBar from './components/UrgenceBar.vue'
+import Icon from './components/Icon.vue'
 
 const auth = useAuth()
 const route = useRoute()
 const open = ref(false)
+
+// Entrées du menu « Administration » : toutes les ressources sauf celles marquées hideFromMenu.
+const menuResources = Object.fromEntries(Object.entries(resources).filter(([, r]) => !r.hideFromMenu))
 
 // Le lien d'évitement place le focus sur le contenu (un simple #ancre ne suffit pas avec le routeur).
 const focusContent = () => document.getElementById('contenu')?.focus()
@@ -37,7 +41,7 @@ watch(() => route.fullPath, () => (open.value = false))
         <template v-if="auth.isAdmin">
           <p class="nav-title">Administration</p>
           <RouterLink
-            v-for="(r, key) in resources"
+            v-for="(r, key) in menuResources"
             :key="key"
             :to="{ name: 'admin', params: { resource: key } }"
             class="nav-item"
@@ -54,7 +58,8 @@ watch(() => route.fullPath, () => (open.value = false))
           :aria-label="theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'"
           @click="toggleTheme"
         >
-          {{ theme === 'dark' ? '☀ Mode clair' : '☾ Mode sombre' }}
+          <Icon :name="theme === 'dark' ? 'sun' : 'moon'" />
+          {{ theme === 'dark' ? 'Mode clair' : 'Mode sombre' }}
         </button>
         <button v-if="auth.isAdmin" class="side-btn" @click="auth.logout()">Déconnexion</button>
         <RouterLink v-else to="/connexion" class="side-btn" active-class="active">Connexion</RouterLink>
@@ -65,7 +70,7 @@ watch(() => route.fullPath, () => (open.value = false))
 
     <div class="main">
       <header class="mobilebar">
-        <button class="burger" aria-controls="menu" :aria-expanded="open" aria-label="Menu" @click="open = !open">☰</button>
+        <button class="burger" aria-controls="menu" :aria-expanded="open" aria-label="Menu" @click="open = !open"><Icon name="menu" /></button>
         <img :src="logo" alt="IMM – Institut Montsouris" class="logo" />
       </header>
       <UrgenceBar />
