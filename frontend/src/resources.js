@@ -42,7 +42,7 @@ export const resources = {
     ],
   },
   personnel: {
-    title: 'Personnel de garde',
+    title: 'Gestion du personnel de garde',
     path: '/personnel',
     paginated: true,
     columns: [

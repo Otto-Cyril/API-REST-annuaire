@@ -114,7 +114,7 @@ watch(cfg, (c) => c && (document.title = pageTitle(`${c.title} (admin)`)), { imm
 
     <p v-if="error" class="error">{{ error }}</p>
 
-    <form v-if="editing !== null" class="form" @submit.prevent="save">
+    <form v-if="editing !== null" class="form form-page" @submit.prevent="save">
       <h2>{{ editing === 0 ? 'Nouvel élément' : `Modifier #${editing}` }}</h2>
       <label v-for="f in cfg.fields" :key="f.key">
         {{ f.label }}
