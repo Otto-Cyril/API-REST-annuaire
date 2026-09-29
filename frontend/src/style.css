@@ -315,6 +315,9 @@ button.danger-fill { background: var(--danger); border-color: var(--danger); col
 
 .form { display: grid; gap: 12px; padding: 16px; margin-bottom: 16px; }
 .form.narrow { max-width: 380px; }
+/* Page de connexion : titre et cadre centrés, un peu descendus du haut */
+.login { display: grid; justify-items: center; padding-top: clamp(8px, 10vh, 96px); }
+.login .form.narrow { width: 100%; margin-bottom: 0; }
 .form label { display: grid; gap: 4px; }
 .actions { display: flex; gap: 8px; }
 
