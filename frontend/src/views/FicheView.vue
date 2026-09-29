@@ -2,6 +2,7 @@
 import { ref, watchEffect } from 'vue'
 import { get } from '../api'
 import CallNumber from '../components/CallNumber.vue'
+import Icon from '../components/Icon.vue'
 import { pageTitle } from '../router'
 import { useAuth } from '../stores/auth'
 
@@ -25,7 +26,7 @@ watchEffect(async () => {
 </script>
 
 <template>
-  <RouterLink to="/" class="back"><span aria-hidden="true">←</span> Retour à la liste</RouterLink>
+  <RouterLink to="/" class="back"><Icon name="arrow-left" /> Retour à la liste</RouterLink>
   <p v-if="error" class="error">{{ error }}</p>
   <article v-else-if="p" class="fiche">
     <header class="fiche-head">
@@ -56,7 +57,7 @@ watchEffect(async () => {
         class="edit-btn edit-btn-lg"
         :aria-label="`Modifier la fiche de ${p.libelle}`"
         title="Modifier la fiche"
-      >✎ Modifier</RouterLink>
+      ><Icon name="edit" /> Modifier</RouterLink>
     </div>
   </article>
   <article v-else class="fiche skeleton" aria-busy="true" aria-label="Chargement">

@@ -2,6 +2,7 @@
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { get, post, put, del } from '../api'
 import { useAuth } from '../stores/auth'
+import Icon from './Icon.vue'
 
 const auth = useAuth()
 
@@ -212,12 +213,12 @@ onBeforeUnmount(() => clearInterval(timer))
         <span v-else-if="failed" class="muted">Urgences indisponibles</span>
         <span class="bar-spacer"></span>
         <button class="bar-btn" :aria-expanded="panel === 'urgences'" @click="toggle('urgences')">
-          <span class="ico ico-red" aria-hidden="true">✚</span> Numéros d'urgence <span class="count">{{ numeros.length }}</span>
-          <span aria-hidden="true">{{ panel === 'urgences' ? '▴' : '▾' }}</span>
+          <Icon class="ico-red" name="plus" /> Numéros d'urgence <span class="count">{{ numeros.length }}</span>
+          <Icon :name="panel === 'urgences' ? 'chevron-up' : 'chevron-down'" />
         </button>
         <button class="bar-btn" :aria-expanded="panel === 'garde'" @click="toggle('garde')">
-          <span class="ico ico-blue" aria-hidden="true">●</span> Garde en cours <span class="count">{{ total }}</span>
-          <span aria-hidden="true">{{ panel === 'garde' ? '▴' : '▾' }}</span>
+          <span class="dot" aria-hidden="true"></span> Garde en cours <span class="count">{{ total }}</span>
+          <Icon :name="panel === 'garde' ? 'chevron-up' : 'chevron-down'" />
         </button>
       </div>
 
@@ -225,7 +226,7 @@ onBeforeUnmount(() => clearInterval(timer))
         <div class="panel-head">
           <h2>Numéros d'urgence</h2>
           <button v-if="auth.isAdmin" class="manage-btn" :aria-pressed="managing" @click="toggleManaging">
-            {{ managing ? 'Terminer' : '⚙ Gérer' }}
+            <Icon v-if="!managing" name="settings" /> {{ managing ? 'Terminer' : 'Gérer' }}
           </button>
         </div>
         <p v-if="failed" class="muted">Indisponibles pour le moment.</p>
@@ -236,8 +237,8 @@ onBeforeUnmount(() => clearInterval(timer))
               <b>{{ n.numero }}</b>
             </a>
             <span v-if="managing" class="row-actions">
-              <button :aria-label="`Modifier ${n.libelle}`" title="Modifier" @click="edit(n)">✎</button>
-              <button class="danger" :aria-label="`Supprimer ${n.libelle}`" title="Supprimer" @click="remove(n)">✕</button>
+              <button :aria-label="`Modifier ${n.libelle}`" title="Modifier" @click="edit(n)"><Icon name="edit" /></button>
+              <button class="danger" :aria-label="`Supprimer ${n.libelle}`" title="Supprimer" @click="remove(n)"><Icon name="close" /></button>
             </span>
           </li>
         </ul>
@@ -261,7 +262,7 @@ onBeforeUnmount(() => clearInterval(timer))
         <div class="panel-head">
           <h2>Garde en cours</h2>
           <button v-if="auth.isAdmin" class="manage-btn" :aria-pressed="gManaging" @click="toggleGManaging">
-            {{ gManaging ? 'Terminer' : '⚙ Gérer' }}
+            <Icon v-if="!gManaging" name="settings" /> {{ gManaging ? 'Terminer' : 'Gérer' }}
           </button>
         </div>
         <p v-if="failed" class="muted">Indisponible pour le moment.</p>
@@ -275,15 +276,15 @@ onBeforeUnmount(() => clearInterval(timer))
               <span v-for="n in p.numerosGarde" :key="n.id" class="chip-wrap">
                 <a :href="tel(n.numero)" class="chip">{{ n.type }} <b>{{ n.numero }}</b></a>
                 <template v-if="gManaging">
-                  <button class="mini" :aria-label="`Modifier ${n.type} ${n.numero}`" title="Modifier" @click="gEditNumero(p, n)">✎</button>
-                  <button class="mini danger" :aria-label="`Supprimer ${n.type} ${n.numero}`" title="Supprimer" @click="gRemoveNumero(n)">✕</button>
+                  <button class="mini" :aria-label="`Modifier ${n.type} ${n.numero}`" title="Modifier" @click="gEditNumero(p, n)"><Icon name="edit" /></button>
+                  <button class="mini danger" :aria-label="`Supprimer ${n.type} ${n.numero}`" title="Supprimer" @click="gRemoveNumero(n)"><Icon name="close" /></button>
                 </template>
               </span>
               <button v-if="gManaging" class="mini add" @click="gEditNumero(p, null)">+ numéro</button>
             </span>
             <span v-if="gManaging" class="person-actions">
-              <button class="mini" @click="gEditPerson(p)">✎ Modifier</button>
-              <button class="mini danger" @click="gRemovePerson(p)">✕ Supprimer</button>
+              <button class="mini" @click="gEditPerson(p)"><Icon name="edit" /> Modifier</button>
+              <button class="mini danger" @click="gRemovePerson(p)"><Icon name="close" /> Supprimer</button>
             </span>
           </li>
         </ul>

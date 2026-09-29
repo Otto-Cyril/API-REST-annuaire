@@ -2,6 +2,7 @@
 import Pagination from '../components/Pagination.vue'
 import CallNumber from '../components/CallNumber.vue'
 import DirectoryFilters from '../components/DirectoryFilters.vue'
+import Icon from '../components/Icon.vue'
 import { useAuth } from '../stores/auth'
 import { useDirectory } from '../composables/useDirectory'
 
@@ -74,7 +75,7 @@ const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) =>
           class="edit-btn"
           :aria-label="`Modifier la fiche de ${p.libelle}`"
           title="Modifier la fiche"
-        >✎</RouterLink>
+        ><Icon name="edit" /></RouterLink>
       </div>
     </li>
   </ul>

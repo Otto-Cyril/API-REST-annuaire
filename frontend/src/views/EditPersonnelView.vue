@@ -3,6 +3,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { get, post, put, del } from '../api'
 import { pageTitle } from '../router'
+import Icon from '../components/Icon.vue'
 
 const props = defineProps({ id: String })
 const router = useRouter()
@@ -131,7 +132,7 @@ onMounted(load)
 </script>
 
 <template>
-  <a :href="backHref" class="back" @click.prevent="goBack"><span aria-hidden="true">←</span> {{ backLabel }}</a>
+  <a :href="backHref" class="back" @click.prevent="goBack"><Icon name="arrow-left" /> {{ backLabel }}</a>
 
   <p v-if="loadError" class="error">{{ loadError }}</p>
 
@@ -164,7 +165,7 @@ onMounted(load)
       <p v-if="formError" class="error">{{ formError }}</p>
       <div class="actions">
         <button class="primary" :disabled="saving">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</button>
-        <span v-if="saved" class="ok" role="status">✓ Enregistré</span>
+        <span v-if="saved" class="ok" role="status"><Icon name="check" /> Enregistré</span>
       </div>
     </form>
 
@@ -180,7 +181,7 @@ onMounted(load)
           <button class="primary" :disabled="n.busy">Enregistrer</button>
           <button type="button" class="danger" @click="toDelete = n">Supprimer</button>
         </div>
-        <span v-if="n.ok" class="ok" role="status">✓ Enregistré</span>
+        <span v-if="n.ok" class="ok" role="status"><Icon name="check" /> Enregistré</span>
         <small v-if="n.error" class="error num-msg">{{ n.error }}</small>
       </form>
 

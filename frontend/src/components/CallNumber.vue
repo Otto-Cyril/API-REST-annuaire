@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onBeforeUnmount } from 'vue'
+import Icon from './Icon.vue'
 
 const props = defineProps({ numero: Object, large: Boolean })
 
@@ -37,12 +38,12 @@ onBeforeUnmount(() => clearTimeout(timer))
 <template>
   <span class="call-item" :class="{ large }">
     <a :href="tel(numero.numero)" class="call-btn" :aria-label="`Appeler ${numero.type} ${numero.numero}`">
-      <span class="call-ico" aria-hidden="true">✆</span>
+      <Icon class="call-ico" name="phone" />
       <span class="call-type">{{ numero.type }}</span>
       <b>{{ numero.numero }}</b>
     </a>
     <button type="button" class="copy-btn" :class="{ done: copied }" :aria-label="`Copier ${numero.numero}`" :title="copied ? 'Copié' : 'Copier le numéro'" @click="copy">
-      {{ copied ? '✓' : '⧉' }}
+      <Icon :name="copied ? 'check' : 'copy'" />
     </button>
     <span class="sr-only" aria-live="polite">{{ copied ? 'Numéro copié' : '' }}</span>
   </span>

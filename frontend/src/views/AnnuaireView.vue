@@ -2,6 +2,7 @@
 import Pagination from '../components/Pagination.vue'
 import CallNumber from '../components/CallNumber.vue'
 import DirectoryFilters from '../components/DirectoryFilters.vue'
+import Icon from '../components/Icon.vue'
 import { useDirectory } from '../composables/useDirectory'
 
 const { filters, page, list, meta, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
@@ -60,7 +61,7 @@ const initials = (p) => `${p.prenom[0] ?? ''}${p.nom[0] ?? ''}`.toUpperCase()
       <div class="call-list">
         <CallNumber v-if="p.telephone" :numero="{ numero: p.telephone, type: 'Tél.' }" />
         <a v-if="p.email" :href="`mailto:${p.email}`" class="mail-btn" :aria-label="`Écrire à ${fullName(p)}`">
-          <span aria-hidden="true">✉</span> {{ p.email }}
+          <Icon name="mail" /> {{ p.email }}
         </a>
       </div>
     </li>

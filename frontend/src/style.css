@@ -98,6 +98,12 @@ h2 { font-size: 1.15rem; }
   .sidebar, .nav-item, .side-btn, .card { transition: none; }
 }
 
+/* Icônes SVG (composant Icon) : alignées sur le texte, sans marge quand elles sont seules ou dans un bouton d'appel */
+.icon { flex: none; vertical-align: -.14em; margin-inline-end: .3em; }
+.icon:only-child, .call-btn .icon, .bar-btn .icon:last-child { margin-inline-end: 0; }
+.bar-btn .icon:last-child { margin-inline-start: .2em; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.burger .icon { font-size: 1.3rem; }
 .link { background: none; border: 0; color: var(--primary); cursor: pointer; font: inherit; padding: 0; }
 
 /* ---------- Bloc d'en-tête : barre discrète + panneaux dépliables ---------- */
