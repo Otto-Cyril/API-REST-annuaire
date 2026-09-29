@@ -49,6 +49,7 @@ watch(() => route.fullPath, () => (open.value = false))
           >
             {{ r.title }}
           </RouterLink>
+          <RouterLink :to="{ name: 'traces' }" class="nav-item" active-class="active">Journal des actions</RouterLink>
         </template>
       </nav>
 

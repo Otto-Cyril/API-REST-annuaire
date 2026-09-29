@@ -17,6 +17,12 @@ const router = createRouter({
       meta: { admin: true, title: 'Modifier la fiche' },
     },
     {
+      path: '/admin/traces',
+      name: 'traces',
+      component: () => import('./views/TracesView.vue'),
+      meta: { admin: true, title: 'Journal des actions' },
+    },
+    {
       path: '/admin/:resource',
       name: 'admin',
       component: () => import('./views/AdminView.vue'),
