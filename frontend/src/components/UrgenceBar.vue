@@ -182,12 +182,15 @@ const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) =>
 
 const tel = (n) => `tel:${n.replace(/\s/g, '')}`
 
+// Le modèle n'a pas de notion de « garde en cours » : le panneau montre les premières personnes par ordre alphabétique.
+const GARDE_EN_COURS = 8
+
 async function load() {
   try {
-    const [urgences, personnel] = await Promise.all([get('/numeros-urgence'), get('/personnel', { limit: 100 })])
+    const [urgences, personnel] = await Promise.all([get('/numeros-urgence'), get('/personnel', { limit: GARDE_EN_COURS })])
     numeros.value = urgences.data
     garde.value = personnel.data
-    total.value = personnel.total ?? personnel.data.length
+    total.value = personnel.data.length
     failed.value = false
   } catch {
     failed.value = true
