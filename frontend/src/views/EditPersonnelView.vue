@@ -139,7 +139,7 @@ onMounted(load)
   <template v-else-if="p">
     <h1>Modifier la fiche</h1>
 
-    <form class="form" @submit.prevent="save">
+    <form class="form form-page" @submit.prevent="save">
       <h2>Informations</h2>
       <label>
         Libellé
@@ -169,7 +169,7 @@ onMounted(load)
       </div>
     </form>
 
-    <section class="form" aria-labelledby="num-title">
+    <section class="form form-page" aria-labelledby="num-title">
       <h2 id="num-title">Numéros de garde</h2>
       <p v-if="listError" class="error">{{ listError }}</p>
       <p v-if="!numbers.length" class="muted">Aucun numéro pour le moment.</p>
