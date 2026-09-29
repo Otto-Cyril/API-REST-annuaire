@@ -241,15 +241,6 @@ button.danger { color: var(--danger); }
 .skip-link:focus { transform: none; }
 #contenu:focus { outline: none; }
 
-/* Écrans tactiles : cibles d'au moins 44 px pour les numéros d'appel */
-@media (pointer: coarse) {
-  .call-btn, .copy-btn { min-height: 44px; }
-  .call-btn { padding: 8px 14px; font-size: .95rem; }
-  .call-btn b { font-size: 1rem; }
-  .call-type { font-size: .8rem; }
-  .copy-btn { padding: 0 14px; }
-}
-
 /* Numéro d'appel + bouton de copie */
 .call-item { display: inline-flex; align-items: stretch; }
 .call-item .call-btn { border-radius: 8px 0 0 8px; }
@@ -342,3 +333,20 @@ tbody tr:hover { background: color-mix(in srgb, var(--accent) 14%, transparent);
 :root[data-theme="dark"] tbody tr:nth-child(even) { background: rgba(255, 255, 255, .06); }
 td.actions { display: table-cell; text-align: right; }
 td.actions button + button { margin-left: 8px; }
+
+/* Écrans tactiles : cibles d'au moins 44 px pour les numéros d'appel (en fin de fichier pour l'emporter sur les règles de base) */
+@media (pointer: coarse) {
+  .call-btn, .copy-btn { min-height: 44px; }
+  .call-btn { padding: 8px 14px; font-size: .95rem; }
+  .call-btn b { font-size: 1rem; }
+  .call-type { font-size: .8rem; }
+  .copy-btn { padding: 0 14px; }
+}
+
+/* Téléphone : les trois tuiles de chiffres restent sur une seule ligne */
+@media (max-width: 480px) {
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .stat { padding: 12px; }
+  .stat b { font-size: 1.6rem; }
+  .stat span { font-size: .75rem; letter-spacing: .04em; }
+}
