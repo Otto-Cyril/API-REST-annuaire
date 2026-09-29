@@ -353,6 +353,13 @@ td.actions button + button { margin-left: 8px; }
   .garde-item .chip { min-height: 44px; padding: 10px 12px; } /* reste en inline-block : le flex supprimerait l'espace entre le type et le numéro */
   .mini, .row-actions button { min-width: 44px; }
   .mail-btn { min-height: 44px; padding: 6px 14px; }
+  /* Filtres actifs : pastilles, « Tout effacer » et croix de la recherche */
+  .filter-pill, .active-filters .link { display: inline-flex; align-items: center; min-height: 44px; }
+  .filter-pill { padding: 6px 14px; gap: 6px; }
+  .active-filters .link { padding: 0 8px; }
+  .active-filters { gap: 0 8px; }
+  .clear { width: 44px; height: 44px; padding: 0; right: 1px; }
+  .search input { padding-right: 48px; }
   .bar-btn, .manage-btn, .mini { gap: 6px; }
   .bar-btn { padding: 6px 12px; }
   .manage-btn { padding: 6px 14px; }
