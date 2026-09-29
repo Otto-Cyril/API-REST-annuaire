@@ -342,7 +342,25 @@ td.actions button + button { margin-left: 8px; }
   .call-type { font-size: .8rem; }
   .copy-btn, .call-item.large .copy-btn { padding: 0 14px; }
   .back { min-height: 44px; }
-  .form button, .form select { min-height: 44px; }
+  .form button, .form select, .head button, .table-wrap button, .modal button { min-height: 44px; }
+}
+
+/* Téléphone : chaque ligne du tableau d'administration devient une carte (libellé de colonne + valeur), boutons en bas */
+@media (max-width: 640px) {
+  .head { gap: 12px; }
+  .table-wrap { overflow: visible; background: none; border: 0; border-radius: 0; }
+  .table-wrap table, .table-wrap tbody { display: block; }
+  .table-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .table-wrap tbody tr { display: block; margin-bottom: 12px; padding: 8px 14px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .table-wrap tbody tr:nth-child(even) { background: var(--surface); }
+  .table-wrap tbody td { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); white-space: normal; overflow-wrap: anywhere; }
+  .table-wrap tbody td::before { content: attr(data-label); color: var(--muted); font-size: .8125rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .table-wrap tbody td.actions { display: flex; gap: 8px; padding: 12px 0 0; border-bottom: 0; text-align: left; }
+  .table-wrap tbody td.actions::before { content: none; }
+  .table-wrap tbody td.actions button { flex: 1; margin: 0; }
+  .table-wrap .empty-flat { border: 1px dashed var(--border); border-radius: 12px; background: var(--surface); }
+  :root[data-theme="dark"] .table-wrap { background: none; border: 0; }
+  :root[data-theme="dark"] .table-wrap tbody tr:nth-child(even) { background: var(--surface); }
 }
 
 /* Téléphone : les trois tuiles de chiffres restent sur une seule ligne */

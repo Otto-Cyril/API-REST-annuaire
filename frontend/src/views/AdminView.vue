@@ -142,7 +142,7 @@ watch(cfg, (c) => c && (document.title = pageTitle(`${c.title} (admin)`)), { imm
         </thead>
         <tbody>
           <tr v-for="r in rows" :key="r.id">
-            <td v-for="c in cfg.columns" :key="c.key">{{ cell(r, c) }}</td>
+            <td v-for="c in cfg.columns" :key="c.key" :data-label="c.label">{{ cell(r, c) }}</td>
             <td class="actions">
               <button @click="open(r)">Modifier</button>
               <button class="danger" @click="toDelete = r">Supprimer</button>
