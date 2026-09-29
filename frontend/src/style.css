@@ -109,7 +109,7 @@ h2 { font-size: 1.15rem; }
 .link { background: none; border: 0; color: var(--primary); cursor: pointer; font: inherit; padding: 0; }
 
 /* ---------- Bloc d'en-tête : barre discrète + panneaux dépliables ---------- */
-.urgence-wrap { max-width: 1280px; margin: 0 auto; padding: 12px 20px 0; }
+.urgence-wrap { max-width: 1600px; margin: 0 auto; padding: 12px 20px 0; }
 .urgence {
   position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; backdrop-filter: blur(10px);
   background: linear-gradient(100deg, color-mix(in srgb, var(--urgence) 10%, var(--glass)), var(--glass) 45%, color-mix(in srgb, var(--accent) 12%, var(--glass)));
@@ -117,7 +117,8 @@ h2 { font-size: 1.15rem; }
 .urgence::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: linear-gradient(var(--urgence), var(--accent)); }
 .urgence-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; padding: 6px 10px 6px 14px; font-size: .88rem; }
 .bar-spacer { flex: 1; }
-.vital { display: inline-flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; }
+.vital { flex: 0 1 auto; display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border: 1px solid color-mix(in srgb, var(--urgence) 35%, var(--border)); border-radius: 999px; background: color-mix(in srgb, var(--urgence) 10%, var(--surface)); color: var(--text); text-decoration: none; }
+.vital-label { font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: .8rem; }
 .vital-num { padding: 2px 12px; border-radius: 999px; background: var(--urgence); color: #fff; font-size: 1rem; animation: glow 2.4s infinite; }
 .vital:hover .vital-num { filter: brightness(1.1); transform: scale(1.04); }
 .vital-num { transition: transform .15s, filter .15s; }
@@ -139,13 +140,13 @@ h2 { font-size: 1.15rem; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 8px 0; }
 .urgence h2 { margin: 0; font-size: .75rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 
-.urgence-list, .garde-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.urgence-list, .garde-list { display: flex; flex-wrap: wrap; align-items: stretch; }
-.urgence-list > li, .garde-list > li { flex: 1 1 auto; min-width: min(100%, 12rem); max-width: 100%; }
+.urgence-list, .garde-list { list-style: none; margin: 0; padding: 0; }
+.garde-list { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; }
+.garde-list > li { flex: 1 1 auto; min-width: min(100%, 12rem); max-width: 100%; }
+.urgence-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); align-items: start; gap: 8px; max-height: 16rem; overflow-y: auto; padding-right: 4px; }
 .urgence-num > span:first-child { min-width: 0; overflow-wrap: anywhere; }
-.urgence-list { max-height: 16rem; overflow-y: auto; padding-right: 4px; }
-.urgence-num { border-left: 3px solid var(--tone, var(--urgence)); transition: transform .15s, box-shadow .15s, border-color .15s; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; height: 100%; padding: 5px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: .88rem; text-decoration: none; }
-.urgence-num b { color: var(--urgence); white-space: nowrap; }
+.urgence-num { border-left: 3px solid var(--tone, var(--urgence)); transition: transform .15s, box-shadow .15s, border-color .15s; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 1px; height: 100%; padding: 3px 7px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font-size: .72rem; text-decoration: none; }
+.urgence-num b { color: var(--urgence); font-size: .85rem; }
 .urgence-num:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--glow); }
 .urgence-list li:nth-child(5n+1) { --tone: #e791bd; }
 .urgence-list li:nth-child(5n+2) { --tone: #60b4dc; }
