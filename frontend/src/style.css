@@ -190,7 +190,7 @@ button.danger { color: var(--danger); }
 .filters { display: grid; gap: 8px; grid-template-columns: 1fr; margin-bottom: 16px; }
 @media (min-width: 720px) { .filters { grid-template-columns: 2fr 1fr 1fr 1fr; } }
 
-.cards { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 12px; transition: opacity .15s; }
+.cards { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 12px; transition: opacity .15s; }
 .cards.busy { opacity: .6; }
 .card, .form, .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
 .card { padding: 14px 16px; transition: border-color .15s, box-shadow .15s; }
