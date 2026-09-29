@@ -2,15 +2,15 @@
 
 namespace App\Repository;
 
-use App\Entity\PersonnelDeGarde;
+use App\Entity\Personne;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<PersonnelDeGarde>
+ * @extends ServiceEntityRepository<Personne>
  */
-class PersonnelDeGardeRepository extends ServiceEntityRepository
+class PersonneRepository extends ServiceEntityRepository
 {
     public const SORT_NOM = 'nom';
     public const SORT_SERVICE = 'service';
@@ -18,34 +18,37 @@ class PersonnelDeGardeRepository extends ServiceEntityRepository
 
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, PersonnelDeGarde::class);
+        parent::__construct($registry, Personne::class);
     }
 
     /**
-     * @return Paginator<PersonnelDeGarde>
+     * @return Paginator<Personne>
      */
     public function search(?string $q, ?int $serviceId, ?int $metierId, int $page, int $limit, string $sort = self::SORT_NOM): Paginator
     {
         $qb = $this->createQueryBuilder('p')
             ->leftJoin('p.service', 's')->addSelect('s')
             ->leftJoin('p.metier', 'm')->addSelect('m')
-            ->leftJoin('p.numerosGarde', 'n')->addSelect('n')
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
         // Tri : par service puis nom, ou par nom (défaut) ; l'id départage les égalités pour une pagination stable.
         if (self::SORT_SERVICE === $sort) {
-            $qb->orderBy('s.libelle', 'ASC')->addOrderBy('p.libelle', 'ASC');
+            $qb->orderBy('s.libelle', 'ASC')->addOrderBy('p.nom', 'ASC')->addOrderBy('p.prenom', 'ASC');
         } else {
-            $qb->orderBy('p.libelle', 'ASC');
+            $qb->orderBy('p.nom', 'ASC')->addOrderBy('p.prenom', 'ASC');
         }
         $qb->addOrderBy('p.id', 'ASC');
 
+        // Chaque mot doit se retrouver dans au moins un champ : « marie dupont » trouve Dupont Marie.
         $words = null === $q ? [] : preg_split('/\s+/', trim($q), -1, PREG_SPLIT_NO_EMPTY);
         foreach ($words as $i => $word) {
             $escaped = addcslashes(mb_strtolower($word), '%_[\\');
             $qb->andWhere($qb->expr()->orX(
-                sprintf('LOWER(p.libelle) LIKE :q%d ESCAPE \'\\\'', $i),
+                sprintf('LOWER(p.nom) LIKE :q%d ESCAPE \'\\\'', $i),
+                sprintf('LOWER(p.prenom) LIKE :q%d ESCAPE \'\\\'', $i),
+                sprintf('LOWER(p.email) LIKE :q%d ESCAPE \'\\\'', $i),
+                sprintf('LOWER(p.telephone) LIKE :q%d ESCAPE \'\\\'', $i),
                 sprintf('LOWER(s.libelle) LIKE :q%d ESCAPE \'\\\'', $i),
                 sprintf('LOWER(s.localisation) LIKE :q%d ESCAPE \'\\\'', $i),
                 sprintf('LOWER(m.libelle) LIKE :q%d ESCAPE \'\\\'', $i),
@@ -60,8 +63,6 @@ class PersonnelDeGardeRepository extends ServiceEntityRepository
             $qb->andWhere('m.id = :metierId')->setParameter('metierId', $metierId);
         }
 
-        // fetchJoinCollection : la jointure sur numerosGarde multiplie les lignes,
-        // le Paginator pagine donc sur les personnels et non sur les lignes jointes.
-        return new Paginator($qb, true);
+        return new Paginator($qb, false);
     }
 }

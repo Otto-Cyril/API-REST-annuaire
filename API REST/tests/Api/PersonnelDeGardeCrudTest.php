@@ -123,6 +123,21 @@ class PersonnelDeGardeCrudTest extends ApiTestCase
         $this->assertSame(['Alpha'], array_column($this->request('GET', '/api/personnel?serviceId='.$urgences->getId().'&metierId='.$medecin->getId()), 'libelle'));
     }
 
+    public function testTriParNomOuParService(): void
+    {
+        $urgences = $this->createService('Urgences');
+        $pediatrie = $this->createService('Pédiatrie');
+        $this->createPersonnel('Alpha', $urgences);
+        $this->createPersonnel('Bravo', $pediatrie);
+
+        $this->assertSame(['Alpha', 'Bravo'], array_column($this->request('GET', '/api/personnel'), 'libelle'));
+        $this->assertSame(['Alpha', 'Bravo'], array_column($this->request('GET', '/api/personnel?sort=nom'), 'libelle'));
+        $this->assertSame(['Bravo', 'Alpha'], array_column($this->request('GET', '/api/personnel?sort=service'), 'libelle'));
+
+        $this->request('GET', '/api/personnel?sort=foo');
+        $this->assertStatus(400);
+    }
+
     public function testRechercheEchappeLesJokersLike(): void
     {
         $this->createPersonnel('Alpha');

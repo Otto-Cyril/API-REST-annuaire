@@ -49,10 +49,20 @@ Sous Windows, si OpenSSL ne trouve pas sa configuration, définir `OPENSSL_CONF`
 Une instance SQL Server de développement est fournie :
 
 ```bash
-docker compose up -d database   # SQL Server sur 127.0.0.1:1433 (mot de passe sa : variable MSSQL_SA_PASSWORD)
+docker compose --env-file .env.local up -d database   # SQL Server sur 127.0.0.1:1433
 php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
 ```
+
+**Le mot de passe `sa` du conteneur doit être le même que celui de `DATABASE_URL`.** Ajouter dans `.env.local` :
+
+```
+MSSQL_SA_PASSWORD=le_meme_mot_de_passe_que_dans_DATABASE_URL
+```
+
+Docker Compose ne lit pas `.env.local` tout seul : d'où l'option `--env-file .env.local` (ou définir la variable dans le shell avant de lancer la commande). Sans elle, le conteneur démarre avec le mot de passe par défaut de `compose.yaml`, reste « unhealthy » et l'API échoue avec `Login failed for user 'sa'`.
+
+Le mot de passe `sa` n'est pris en compte qu'à la **première** création du volume `database_data`. Si le volume existe déjà avec un autre mot de passe, il faut le supprimer (`docker compose down -v`, **efface les données**) ou utiliser l'ancien mot de passe.
 
 ### 4. Lancer l'API
 

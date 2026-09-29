@@ -28,7 +28,7 @@ abstract class ApiTestCase extends WebTestCase
 
         // Ordre : les tables enfants d'abord (clés étrangères).
         $connection = $this->em->getConnection();
-        foreach (['numero_garde', 'personnel_de_garde', 'service', 'metier', 'numero_urgence', 'trace'] as $table) {
+        foreach (['numero_garde', 'personnel_de_garde', 'personne', 'service', 'metier', 'numero_urgence', 'trace'] as $table) {
             $connection->executeStatement('DELETE FROM '.$table);
         }
     }
