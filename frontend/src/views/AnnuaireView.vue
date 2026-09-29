@@ -2,26 +2,17 @@
 import Pagination from '../components/Pagination.vue'
 import CallNumber from '../components/CallNumber.vue'
 import DirectoryFilters from '../components/DirectoryFilters.vue'
-import { useAuth } from '../stores/auth'
 import { useDirectory } from '../composables/useDirectory'
 
-const auth = useAuth()
-const { filters, page, list, meta, overall, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
-  useDirectory('/personnel')
+const { filters, page, list, meta, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
+  useDirectory('/personnes')
 
-const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
+const fullName = (p) => `${p.prenom} ${p.nom}`
+const initials = (p) => `${p.prenom[0] ?? ''}${p.nom[0] ?? ''}`.toUpperCase()
 </script>
 
 <template>
-  <h1>Personnel de garde</h1>
-
-  <section class="stats" aria-label="Chiffres clés">
-    <button type="button" class="stat" :class="{ active: !hasFilters }" @click="resetFilters">
-      <b>{{ overall ?? meta.total }}</b><span>Personnel</span>
-    </button>
-    <div class="stat"><b>{{ services.length }}</b><span>Services</span></div>
-    <div class="stat"><b>{{ metiers.length }}</b><span>Métiers</span></div>
-  </section>
+  <h1>Annuaire du personnel</h1>
 
   <DirectoryFilters
     :filters="filters"
@@ -57,9 +48,9 @@ const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) =>
 
   <ul v-else class="cards" :class="{ busy: loading }">
     <li v-for="p in list" :key="p.id" class="card person">
-      <span class="avatar" aria-hidden="true">{{ initials(p.libelle) }}</span>
+      <span class="avatar" aria-hidden="true">{{ initials(p) }}</span>
       <div class="person-body">
-        <RouterLink :to="{ name: 'fiche', params: { id: p.id } }" class="card-title">{{ p.libelle }}</RouterLink>
+        <span class="card-title">{{ fullName(p) }}</span>
         <div class="tags">
           <span class="tag tag-service">{{ p.service.libelle }}</span>
           <span class="tag tag-metier">{{ p.metier.libelle }}</span>
@@ -67,14 +58,10 @@ const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) =>
         </div>
       </div>
       <div class="call-list">
-        <CallNumber v-for="n in p.numerosGarde" :key="n.id" :numero="n" />
-        <RouterLink
-          v-if="auth.isAdmin"
-          :to="{ name: 'personnel-edit', params: { id: p.id } }"
-          class="edit-btn"
-          :aria-label="`Modifier la fiche de ${p.libelle}`"
-          title="Modifier la fiche"
-        >✎</RouterLink>
+        <CallNumber v-if="p.telephone" :numero="{ numero: p.telephone, type: 'Tél.' }" />
+        <a v-if="p.email" :href="`mailto:${p.email}`" class="mail-btn" :aria-label="`Écrire à ${fullName(p)}`">
+          <span aria-hidden="true">✉</span> {{ p.email }}
+        </a>
       </div>
     </li>
   </ul>

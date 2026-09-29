@@ -57,6 +57,36 @@ export const resources = {
     ],
     toForm: (r) => ({ libelle: r.libelle, serviceId: r.service?.id, metierId: r.metier?.id }),
   },
+  personnes: {
+    title: 'Annuaire du personnel',
+    path: '/personnes',
+    paginated: true,
+    columns: [
+      { key: 'nom', label: 'Nom' },
+      { key: 'prenom', label: 'Prénom' },
+      { key: 'service', label: 'Service', get: (r) => r.service?.libelle },
+      { key: 'metier', label: 'Métier', get: (r) => r.metier?.libelle },
+      { key: 'email', label: 'E-mail' },
+      { key: 'telephone', label: 'Téléphone / poste' },
+    ],
+    // optional : champ facultatif (une valeur vide est envoyée comme null) ; type : type de l'<input>.
+    fields: [
+      { key: 'nom', label: 'Nom', max: 50 },
+      { key: 'prenom', label: 'Prénom', max: 50 },
+      { key: 'serviceId', label: 'Service', options: 'services', optionLabel: 'libelle' },
+      { key: 'metierId', label: 'Métier', options: 'metiers', optionLabel: 'libelle' },
+      { key: 'email', label: 'E-mail', max: 100, type: 'email', optional: true },
+      { key: 'telephone', label: 'Téléphone / poste', max: 50, optional: true },
+    ],
+    toForm: (r) => ({
+      nom: r.nom,
+      prenom: r.prenom,
+      serviceId: r.service?.id,
+      metierId: r.metier?.id,
+      email: r.email,
+      telephone: r.telephone,
+    }),
+  },
   'numeros-garde': {
     title: 'Numéros de garde',
     path: '/numeros-garde',

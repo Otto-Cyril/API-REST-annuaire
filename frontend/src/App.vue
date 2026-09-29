@@ -11,11 +11,15 @@ const auth = useAuth()
 const route = useRoute()
 const open = ref(false)
 
+// Le lien d'évitement place le focus sur le contenu (un simple #ancre ne suffit pas avec le routeur).
+const focusContent = () => document.getElementById('contenu')?.focus()
+
 // Referme le menu (mobile) à chaque navigation.
 watch(() => route.fullPath, () => (open.value = false))
 </script>
 
 <template>
+  <a href="#contenu" class="skip-link" @click.prevent="focusContent">Aller au contenu</a>
   <div class="bg" aria-hidden="true"></div>
 
   <div class="shell" :class="{ open }">
@@ -27,7 +31,8 @@ watch(() => route.fullPath, () => (open.value = false))
 
       <nav class="nav">
         <p class="nav-title">Navigation</p>
-        <RouterLink to="/" class="nav-item" exact-active-class="active">Annuaire du personnel</RouterLink>
+        <RouterLink to="/annuaire" class="nav-item" active-class="active">Annuaire du personnel</RouterLink>
+        <RouterLink to="/" class="nav-item" exact-active-class="active">Personnel de garde</RouterLink>
 
         <template v-if="auth.isAdmin">
           <p class="nav-title">Administration</p>
@@ -64,7 +69,7 @@ watch(() => route.fullPath, () => (open.value = false))
         <img :src="logo" alt="IMM – Institut Montsouris" class="logo" />
       </header>
       <UrgenceBar />
-      <main class="container">
+      <main id="contenu" class="container" tabindex="-1">
         <RouterView />
       </main>
     </div>

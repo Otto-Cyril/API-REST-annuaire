@@ -1,16 +1,23 @@
 <script setup>
 import { ref, watchEffect } from 'vue'
 import { get } from '../api'
+import CallNumber from '../components/CallNumber.vue'
+import { pageTitle } from '../router'
+import { useAuth } from '../stores/auth'
 
 const props = defineProps({ id: String })
+const auth = useAuth()
 const p = ref(null)
 const error = ref('')
+
+const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
 
 watchEffect(async () => {
   p.value = null
   error.value = ''
   try {
     p.value = (await get(`/personnel/${props.id}`)).data
+    document.title = pageTitle(p.value.libelle)
   } catch (e) {
     error.value = e.status === 404 ? 'Fiche introuvable.' : e.message
   }
@@ -21,7 +28,16 @@ watchEffect(async () => {
   <RouterLink to="/" class="back"><span aria-hidden="true">←</span> Retour à la liste</RouterLink>
   <p v-if="error" class="error">{{ error }}</p>
   <article v-else-if="p" class="fiche">
-    <h1>{{ p.libelle }}</h1>
+    <header class="fiche-head">
+      <span class="avatar avatar-lg" aria-hidden="true">{{ initials(p.libelle) }}</span>
+      <div>
+        <h1>{{ p.libelle }}</h1>
+        <div class="tags">
+          <span class="tag tag-service">{{ p.service.libelle }}</span>
+          <span class="tag tag-metier">{{ p.metier.libelle }}</span>
+        </div>
+      </div>
+    </header>
     <dl>
       <dt>Service</dt>
       <dd>{{ p.service.libelle }}</dd>
@@ -32,13 +48,20 @@ watchEffect(async () => {
     </dl>
     <h2>Numéros de garde</h2>
     <p v-if="!p.numerosGarde.length" class="muted">Aucun numéro.</p>
-    <ul class="numbers big">
-      <li v-for="n in p.numerosGarde" :key="n.id">
-        <a :href="`tel:${n.numero.replace(/\s/g, '')}`" class="chip">
-          {{ n.type }} <b>{{ n.numero }}</b>
-        </a>
-      </li>
-    </ul>
+    <div class="call-list">
+      <CallNumber v-for="n in p.numerosGarde" :key="n.id" :numero="n" large />
+      <RouterLink
+        v-if="auth.isAdmin"
+        :to="{ name: 'personnel-edit', params: { id: p.id } }"
+        class="edit-btn edit-btn-lg"
+        :aria-label="`Modifier la fiche de ${p.libelle}`"
+        title="Modifier la fiche"
+      >✎ Modifier</RouterLink>
+    </div>
   </article>
-  <p v-else class="muted">Chargement…</p>
+  <article v-else class="fiche skeleton" aria-busy="true" aria-label="Chargement">
+    <span class="sk-avatar"></span>
+    <span class="sk-line w60"></span>
+    <span class="sk-line w40"></span>
+  </article>
 </template>
