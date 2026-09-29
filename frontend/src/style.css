@@ -342,6 +342,7 @@ td.actions button + button { margin-left: 8px; }
   .call-type { font-size: .8rem; }
   .copy-btn, .call-item.large .copy-btn { padding: 0 14px; }
   .back { min-height: 44px; }
+  .form button, .form select { min-height: 44px; }
 }
 
 /* Téléphone : les trois tuiles de chiffres restent sur une seule ligne */
