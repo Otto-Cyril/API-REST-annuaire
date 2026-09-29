@@ -348,6 +348,13 @@ td.actions button + button { margin-left: 8px; }
   .copy-btn, .call-item.large .copy-btn { padding: 0 14px; }
   .back { min-height: 44px; }
   .form button, .form select, .head button, .table-wrap button, .modal button { min-height: 44px; }
+  /* Barre d'urgence : boutons d'ouverture, numéro vital, numéros de garde et boutons du mode « Gérer » */
+  .bar-btn, .vital, .manage-btn, .mini, .row-actions button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
+  .garde-item .chip { min-height: 44px; padding: 10px 12px; } /* reste en inline-block : le flex supprimerait l'espace entre le type et le numéro */
+  .mini, .row-actions button { min-width: 44px; }
+  .bar-btn, .manage-btn, .mini { gap: 6px; }
+  .bar-btn { padding: 6px 12px; }
+  .manage-btn { padding: 6px 14px; }
 }
 
 /* Téléphone : chaque ligne du tableau d'administration devient une carte (libellé de colonne + valeur), boutons en bas */
