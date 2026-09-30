@@ -9,7 +9,6 @@ const { filters, page, list, meta, services, metiers, loading, error, hasFilters
   useDirectory('/personnes')
 
 const fullName = (p) => `${p.prenom} ${p.nom}`
-const initials = (p) => `${p.prenom[0] ?? ''}${p.nom[0] ?? ''}`.toUpperCase()
 </script>
 
 <template>
@@ -35,7 +34,6 @@ const initials = (p) => `${p.prenom[0] ?? ''}${p.nom[0] ?? ''}`.toUpperCase()
 
   <ul v-else-if="loading && !list.length" class="cards" aria-busy="true" aria-label="Chargement">
     <li v-for="i in 4" :key="i" class="card skeleton" aria-hidden="true">
-      <span class="sk-avatar"></span>
       <span class="sk-line w60"></span>
       <span class="sk-line w40"></span>
     </li>
@@ -49,7 +47,6 @@ const initials = (p) => `${p.prenom[0] ?? ''}${p.nom[0] ?? ''}`.toUpperCase()
 
   <ul v-else class="cards" :class="{ busy: loading }">
     <li v-for="p in list" :key="p.id" class="card person">
-      <span class="avatar" aria-hidden="true">{{ initials(p) }}</span>
       <div class="person-body">
         <span class="card-title">{{ fullName(p) }}</span>
         <div class="tags">

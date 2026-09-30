@@ -250,15 +250,13 @@ button.danger { color: var(--danger); }
 
 /* ---------- Accueil : cartes du personnel ---------- */
 .card.person { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; }
-.card.person .avatar { grid-row: auto; width: 46px; height: 46px; flex: none; font-size: .95rem; }
 .person-body { flex: 1 1 14rem; min-width: 0; }
 .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
 .tag { padding: 2px 10px; border-radius: 999px; font-size: .8125rem; font-weight: 600; border: 1px solid transparent; }
 .tag-service { background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary); border-color: color-mix(in srgb, var(--primary) 35%, transparent); }
 :root[data-theme="dark"] .tag-service { color: var(--text); } /* le bleu clair du mode sombre sur son fond teinté ne fait que 3,9 */
 .tag-metier { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--text); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
-.tag-loc { font-size: .82rem; }
-.call-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-loc { font-size: .82rem; }.call-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .call-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 8px;
   background: var(--primary); color: var(--on-primary); text-decoration: none; font-size: .8rem;
@@ -327,6 +325,7 @@ button.stat:hover, button.stat.active { border-color: var(--accent); box-shadow:
 .fiche.skeleton { padding: 24px; }
 
 /* Chargement : cartes squelette */
+.cards .card.skeleton { grid-template-columns: 1fr; }
 .skeleton { display: grid; grid-template-columns: 46px 1fr; gap: 8px 16px; align-items: center; min-height: 82px; }
 .sk-avatar, .sk-line { background: linear-gradient(90deg, var(--border), color-mix(in srgb, var(--border) 45%, transparent), var(--border)); background-size: 200% 100%; animation: shimmer 1.4s infinite linear; border-radius: 8px; }
 .sk-avatar { grid-row: 1 / span 2; width: 46px; height: 46px; border-radius: 50%; }

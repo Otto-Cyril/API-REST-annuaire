@@ -9,8 +9,6 @@ import { useDirectory } from '../composables/useDirectory'
 const auth = useAuth()
 const { filters, page, list, meta, overall, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
   useDirectory('/personnel')
-
-const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
 </script>
 
 <template>
@@ -44,7 +42,6 @@ const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) =>
 
   <ul v-else-if="loading && !list.length" class="cards" aria-busy="true" aria-label="Chargement">
     <li v-for="i in 4" :key="i" class="card skeleton" aria-hidden="true">
-      <span class="sk-avatar"></span>
       <span class="sk-line w60"></span>
       <span class="sk-line w40"></span>
     </li>
@@ -58,7 +55,6 @@ const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) =>
 
   <ul v-else class="cards" :class="{ busy: loading }">
     <li v-for="p in list" :key="p.id" class="card person">
-      <span class="avatar" aria-hidden="true">{{ initials(p.libelle) }}</span>
       <div class="person-body">
         <RouterLink :to="{ name: 'fiche', params: { id: p.id } }" class="card-title">{{ p.libelle }}</RouterLink>
         <div class="tags">
