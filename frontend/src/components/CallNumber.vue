@@ -7,8 +7,6 @@ const props = defineProps({ numero: Object, large: Boolean })
 const copied = ref(false)
 let timer
 
-const tel = (n) => `tel:${n.replace(/\s/g, '')}`
-
 async function copy() {
   const text = props.numero.numero
   try {
@@ -37,11 +35,11 @@ onBeforeUnmount(() => clearTimeout(timer))
 
 <template>
   <span class="call-item" :class="{ large }">
-    <a :href="tel(numero.numero)" class="call-btn" :aria-label="`Appeler ${numero.type} ${numero.numero}`">
+    <span class="call-btn">
       <Icon class="call-ico" name="phone" />
       <span class="call-type">{{ numero.type }}</span>
       <b>{{ numero.numero }}</b>
-    </a>
+    </span>
     <button type="button" class="copy-btn" :class="{ done: copied }" :aria-label="`Copier ${numero.numero}`" :title="copied ? 'Copié' : 'Copier le numéro'" @click="copy">
       <Icon :name="copied ? 'check' : 'copy'" />
     </button>

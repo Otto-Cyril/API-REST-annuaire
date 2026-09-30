@@ -186,13 +186,14 @@ onMounted(load)
       </form>
 
       <form class="num-row num-new" @submit.prevent="addNumber">
-        <input v-model="fresh.type" list="types-numero" maxlength="50" required aria-label="Type du nouveau numéro" placeholder="Type (Poste, Mobile…)" />
+        <input v-model="fresh.type" list="types-numero" maxlength="50" required aria-label="Type du nouveau numéro" placeholder="Type (Fixe, DECT, Mobile…)" />
         <input v-model="fresh.numero" maxlength="50" required aria-label="Nouveau numéro" placeholder="Nouveau numéro" />
         <div class="actions"><button :disabled="freshBusy">Ajouter</button></div>
         <small v-if="freshError" class="error num-msg">{{ freshError }}</small>
       </form>
       <datalist id="types-numero">
-        <option value="Poste"></option>
+        <option value="Fixe"></option>
+        <option value="DECT"></option>
         <option value="Mobile"></option>
         <option value="Bip"></option>
       </datalist>
