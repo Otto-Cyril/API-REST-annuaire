@@ -23,16 +23,13 @@ const numberRank = (n) => {
 }
 export const sortNumbers = (numbers) => [...numbers].sort((a, b) => numberRank(a) - numberRank(b))
 
-const withNumbers = (p) => {
-  const numerosGarde = sortNumbers(p.numerosGarde)
-  return { ...p, numerosGarde, numeros: numbersByType(numerosGarde), periodes: [] }
-}
+const withSortedNumbers = (p) => ({ ...p, numerosGarde: sortNumbers(p.numerosGarde), periodes: [] })
 
 // Gardes -> personnes ; une personne avec plusieurs gardes se chevauchant n'apparaît qu'une fois (ses périodes sont listées).
 export function peopleOnDuty(gardes) {
   const byId = new Map()
   for (const g of gardes) {
-    const p = byId.get(g.personnelDeGarde.id) ?? withNumbers(g.personnelDeGarde)
+    const p = byId.get(g.personnelDeGarde.id) ?? withSortedNumbers(g.personnelDeGarde)
     p.periodes.push({ id: g.id, dateDebut: g.dateDebut, dateFin: g.dateFin })
     byId.set(p.id, p)
   }
@@ -48,25 +45,4 @@ export function groupByService(people) {
     groups.set(g.id, g)
   }
   return [...groups.values()].sort((a, b) => a.libelle.localeCompare(b.libelle, 'fr'))
-}
-
-// Numéros d'une personne rangés par colonne : { fixe, dect, autres } (fixe et dect : texte, « · » s'il y en a plusieurs ; autres : « Type numéro »)
-export function numbersByType(numbers) {
-  const of = (type) => numbers.filter((n) => n.type === type).map((n) => n.numero).join(' · ')
-  return {
-    fixe: of('Fixe'),
-    dect: of('DECT'),
-    autres: numbers.filter((n) => !NUMBER_ORDER.includes(n.type)).map((n) => `${n.type} ${n.numero}`),
-  }
-}
-
-// Résumé pour la barre du haut : les max premières personnes avec leur numéro le plus utile (DECT, sinon Fixe, sinon un autre)
-export function barSummary(people, max = 2) {
-  const items = people.slice(0, max).map((p) => {
-    const first = p.numerosGarde[0]
-    const dect = p.numerosGarde.find((n) => n.type === 'DECT')
-    const n = dect ?? first
-    return { id: p.id, libelle: p.libelle, type: n?.type ?? '', numero: n?.numero ?? '' }
-  })
-  return { items, more: Math.max(0, people.length - max) }
 }

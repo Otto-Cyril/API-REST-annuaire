@@ -30,7 +30,7 @@ Le dépôt contient deux applications :
 
 ## Fonctionnalités du frontend
 
-- **Public** : annuaire du personnel (page d'accueil `/`, recherche et filtres), personnel de garde (`/garde`), fiches, barre du haut avec les numéros d'urgence, le résumé « De garde » et le panneau « Garde en cours » (les personnes dont une garde couvre aujourd'hui, par service, avec leurs numéros Fixe et DECT, et la prochaine garde si personne n'est de garde), mode clair/sombre.
+- **Public** : annuaire du personnel (page d'accueil `/`, recherche et filtres), personnel de garde (`/garde`), fiches, barre du haut avec les panneaux « Numéros d'urgence » et « Garde en cours » (les personnes dont une garde couvre aujourd'hui, par service, avec leurs numéros Fixe, DECT et autres, et la prochaine garde si personne n'est de garde), mode clair/sombre.
 - **Administration** (connexion requise, menu « Administration ») : services, métiers, numéros d'urgence, personnel de garde, planning des gardes (`/admin/gardes` : qui est de garde, du jour X au jour Y inclus), numéros de garde, annuaire du personnel, et journal des actions (`/admin/traces`).
 
 ## Tests

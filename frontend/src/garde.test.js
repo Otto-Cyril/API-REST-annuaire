@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { frDate, today, relativeDay, sortNumbers, peopleOnDuty, groupByService, numbersByType, barSummary } from './garde'
+import { frDate, today, relativeDay, sortNumbers, peopleOnDuty, groupByService } from './garde'
 
 const person = (id, libelle, service, numerosGarde = []) => ({ id, libelle, service, metier: { id: 1, libelle: 'Médecin' }, numerosGarde })
 const garde = (id, p, dateDebut, dateFin = dateDebut) => ({ id, personnelDeGarde: p, dateDebut, dateFin })
@@ -69,56 +69,5 @@ describe('groupByService', () => {
 
   it('renvoie une liste vide sans personne', () => {
     expect(groupByService([])).toEqual([])
-  })
-})
-
-describe('numbersByType', () => {
-  it('range les numéros par colonne Fixe / DECT / autres', () => {
-    const res = numbersByType([
-      { type: 'Fixe', numero: '01 23 45 67 12' },
-      { type: 'DECT', numero: '4101' },
-      { type: 'Astreinte', numero: '01 43 21 00 12' },
-    ])
-    expect(res).toEqual({ fixe: '01 23 45 67 12', dect: '4101', autres: ['Astreinte 01 43 21 00 12'] })
-  })
-
-  it('laisse vide une colonne sans numéro et joint les doublons', () => {
-    const res = numbersByType([{ type: 'DECT', numero: '4101' }, { type: 'DECT', numero: '4102' }])
-    expect(res).toEqual({ fixe: '', dect: '4101 · 4102', autres: [] })
-  })
-
-  it('est calculé sur les personnes de garde', () => {
-    const martin = person(1, 'Dr Martin', { id: 1, libelle: 'Urgences' }, [{ type: 'DECT', numero: '4101' }, { type: 'Fixe', numero: '0123' }])
-    expect(peopleOnDuty([garde(10, martin, '2026-06-10')])[0].numeros).toEqual({ fixe: '0123', dect: '4101', autres: [] })
-  })
-})
-
-describe('barSummary', () => {
-  const mk = (id, libelle, numerosGarde) => person(id, libelle, { id: 1, libelle: 'Urgences' }, numerosGarde)
-
-  it('montre le DECT de chaque personne et compte les suivantes', () => {
-    const people = [
-      mk(1, 'Dr A', [{ type: 'Fixe', numero: '01' }, { type: 'DECT', numero: '4101' }]),
-      mk(2, 'Dr B', [{ type: 'DECT', numero: '4102' }]),
-      mk(3, 'Dr C', [{ type: 'DECT', numero: '4103' }]),
-    ]
-    expect(barSummary(people)).toEqual({
-      items: [
-        { id: 1, libelle: 'Dr A', type: 'DECT', numero: '4101' },
-        { id: 2, libelle: 'Dr B', type: 'DECT', numero: '4102' },
-      ],
-      more: 1,
-    })
-  })
-
-  it('se rabat sur le premier numéro sans DECT, et reste vide sans numéro', () => {
-    const res = barSummary([mk(1, 'Dr A', [{ type: 'Fixe', numero: '01' }]), mk(2, 'Dr B', [])])
-    expect(res.items[0]).toMatchObject({ type: 'Fixe', numero: '01' })
-    expect(res.items[1]).toMatchObject({ type: '', numero: '' })
-    expect(res.more).toBe(0)
-  })
-
-  it('renvoie un résumé vide sans personne', () => {
-    expect(barSummary([])).toEqual({ items: [], more: 0 })
   })
 })
