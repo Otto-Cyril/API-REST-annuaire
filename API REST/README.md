@@ -34,7 +34,7 @@ Le fichier `.env` est ignoré par git : les valeurs ci-dessous sont à mettre da
 | `LDAP_BASE_DN` | Où chercher les utilisateurs | `OU=Comptes,OU=IMM,DC=immdom,DC=local` |
 | `LDAP_SEARCH_DN` / `LDAP_SEARCH_PASSWORD` | Compte technique de recherche | |
 | `LDAP_USER_QUERY` | Filtre de recherche de l'utilisateur | `(sAMAccountName={username})` |
-| `LDAP_ADMIN_GROUP_DN` | DN du groupe AD autorisé à écrire. **Vide = tout compte AD valide est admin** | (vide pour l'instant) |
+| `LDAP_ADMIN_GROUP_DN` | DN du groupe AD autorisé à écrire. **Vide = tout compte AD valide est admin** | `CN=GSG_APP_ANNUAIRE_ADMIN,OU=Applications,OU=Groupes,OU=IMM,DC=immdom,DC=local` |
 
 ### 2. Clés JWT
 
@@ -157,7 +157,7 @@ tests/                Tests fonctionnels (Api/) et unitaires (Security/)
 
 ## Avant une mise en production
 
-- Renseigner `LDAP_ADMIN_GROUP_DN` : sinon tout compte AD valide obtient les droits d'écriture.
+- Vérifier `LDAP_ADMIN_GROUP_DN` (groupe `GSG_APP_ANNUAIRE_ADMIN`) sur l'environnement cible : s'il est vide, tout compte AD valide obtient les droits d'écriture.
 - Passer LDAP en `ssl`/`tls` : en `none`, les mots de passe circulent en clair.
 - Définir `APP_ENV=prod`, un `APP_SECRET` et un `JWT_PASSPHRASE` propres, et `CORS_ALLOW_ORIGIN` pour l'URL du front.
 - Utiliser un compte SQL Server à privilèges limités (pas `sa`) et retirer `TrustServerCertificate` si le certificat est valide.

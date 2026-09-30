@@ -42,6 +42,6 @@ cd "API REST" && php bin/phpunit           # tests PHPUnit (base de test requise
 
 ## Avant une mise en production
 
-Voir la section dédiée du [README de l'API](API%20REST/README.md#avant-une-mise-en-production). Point à ne pas oublier : `LDAP_ADMIN_GROUP_DN` est vide pour l'instant, donc tout compte AD valide a les droits d'écriture.
+Voir la section dédiée du [README de l'API](API%20REST/README.md#avant-une-mise-en-production). Point à ne pas oublier : `LDAP_ADMIN_GROUP_DN` (groupe `GSG_APP_ANNUAIRE_ADMIN`) doit être renseigné sur l'environnement cible, sinon tout compte AD valide a les droits d'écriture.
 
 Pour le frontend, `npm run build` produit le dossier `dist/`, à servir avec `/api` relayé vers l'API.
