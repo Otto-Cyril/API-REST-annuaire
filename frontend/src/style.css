@@ -139,55 +139,72 @@ h2 { font-size: 1.15rem; }
 .urgence h2 { margin: 0; font-size: .75rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 
 .urgence-list, .garde-list { list-style: none; margin: 0; padding: 0; }
-.garde-list { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; }
-.garde-list > li { flex: 1 1 auto; min-width: min(100%, 12rem); max-width: 100%; }
-.urgence-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); align-items: start; gap: 4px; max-height: 16rem; overflow-y: auto; padding-right: 4px; }
-.urgence-num > span:first-child { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
-.urgence-num { border-left: 3px solid var(--tone, var(--urgence)); transition: transform .15s, box-shadow .15s, border-color .15s; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px; height: 100%; min-height: 4.5rem; padding: 6px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font-size: .82rem; font-weight: 500; text-decoration: none; }
-.urgence-num b { color: var(--urgence); font-size: .95rem; font-weight: 700; }
-.urgence-num:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--glow); }
+/* Numéros d'urgence : un seul bloc, même langage que la garde en cours — une ligne par numéro (libellé à gauche, numéro en grand à droite) */
+.urgence-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 6px; max-height: 18rem; overflow-y: auto; padding-right: 4px; }
+.urgence-num { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; height: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-size: .88rem; text-decoration: none; transition: background .15s, border-color .15s; }
+.urgence-ico { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: color-mix(in srgb, var(--urgence) 12%, transparent); color: var(--urgence); font-size: 1rem; }
+.urgence-label { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+.urgence-num b { color: var(--urgence); font-size: 1.1rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.urgence-num:hover { border-color: color-mix(in srgb, var(--urgence) 40%, var(--border)); background: color-mix(in srgb, var(--urgence) 6%, var(--surface)); }
 
-.garde-list > li { min-width: min(100%, 16rem); }
-.garde-list { max-height: 16rem; overflow-y: auto; padding-right: 4px; }
-.garde-item { grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; transition: transform .15s, box-shadow .15s; display: grid; gap: 2px 12px; padding: 8px 12px; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; background: var(--surface); font-size: .88rem; }
+.garde-groups { max-height: 18rem; overflow-y: auto; padding-right: 4px; }
+.garde-group + .garde-group { margin-top: 10px; }
+.garde-group-title { margin: 0 0 6px; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.garde-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.garde-chip { padding: 2px 12px; border-radius: 999px; font-size: .8rem; }
+.garde-chip[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.garde-chip[aria-pressed="true"] .count { background: color-mix(in srgb, var(--on-primary) 25%, transparent); color: var(--on-primary); }
+.garde-next { margin-top: 8px; padding: 8px 12px; border: 1px dashed var(--accent); border-radius: 8px; background: var(--surface); }
+.garde-next-title { margin: 0 0 4px; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.garde-next ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.garde-next li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.avatar { grid-column: 1; grid-row: 1 / span 3; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-size: .8rem; font-weight: 700; }
+
+
+
+/* Mode « Gérer » : une carte par personne (nom, métier, numéros avec boutons d'édition) */
+.garde-list { display: flex; flex-direction: column; gap: 6px; }
+.garde-list > li { flex: 0 0 auto; min-width: 0; max-width: 100%; align-self: stretch; }
+.garde-item { display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: 2px 12px; row-gap: 0; padding: 6px 12px; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; background: var(--surface); font-size: .88rem; transition: transform .15s, box-shadow .15s; }
 .garde-item:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--glow); }
 .garde-item > :not(.avatar) { grid-column: 2; }
-.avatar { grid-column: 1; grid-row: 1 / span 3; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-size: .8rem; font-weight: 700; }
-.garde-name { font-weight: 700; }
 .garde-item > * { min-width: 0; overflow-wrap: anywhere; }
-.garde-nums { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-.garde-nums .chip { padding: 2px 10px; font-size: .85rem; }
-
-/* Personne de garde : nom cliquable qui déplie service, métier, numéros et lien vers la fiche */
-.garde-list { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; }
-.garde-list > li { flex: 0 0 auto; min-width: 0; max-width: 100%; }
-.garde-list > li.open { align-self: stretch; }
-.garde-item:not(.open) { grid-template-columns: auto auto; }
-.garde-item { grid-template-columns: auto auto minmax(0, 1fr); padding: 6px 12px; row-gap: 0; }
 .garde-item .avatar { grid-row: 1; align-self: center; width: 34px; height: 34px; font-size: .75rem; }
-.garde-item .garde-name { grid-column: 2 / -1; grid-row: 1; min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; line-height: 1.2; text-align: left; cursor: pointer; }
-.garde-item.open .garde-name { grid-column: 2; width: auto; white-space: nowrap; }
+.garde-item .garde-name { grid-column: 2; grid-row: 1; font-weight: 700; }
 .garde-item .garde-details { grid-column: 3; grid-row: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 2px 0 2px 4px; }
-.garde-details .garde-nums { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; margin: 0 0 0 auto; }
-.garde-details .chip-wrap { display: flex; gap: 4px; }
+.garde-nums { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; margin: 0 0 0 auto; }
 .garde-tags { display: flex; flex-wrap: nowrap; gap: 6px; }
 .garde-tag { padding: 1px 10px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); font-size: .76rem; font-weight: 600; }
 .garde-tag.alt { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text); }
-.garde-num { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.garde-num { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); text-decoration: none; }
 .garde-num .icon { display: grid; place-items: center; box-sizing: content-box; width: 1em; height: 1em; padding: 6px; border-radius: 50%; background: var(--primary); color: var(--on-primary); font-size: .85rem; }
-.garde-num:hover { border-color: var(--accent); box-shadow: 0 2px 8px var(--glow); transform: translateY(-1px); }
 .garde-num span { color: var(--muted); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
 .garde-num b { color: var(--text); font-size: .95rem; }
+.chip-wrap { display: inline-flex; align-items: center; gap: 4px; }
+.person-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 
-/* Avatar : dégradé propre à chaque personne (--h posé par le composant) */
-.garde-item .avatar { background: linear-gradient(135deg, hsl(var(--h, 210) 55% 34%), hsl(calc(var(--h, 210) + 30) 55% 42%)); }
-
-/* Ouverture : flèche qui pivote, détails qui glissent en fondu */
-.garde-chev { transition: transform .25s ease; }
-.garde-item.open .garde-chev { transform: rotate(180deg); }
-.garde-det-enter-active, .garde-det-leave-active { transition: opacity .22s ease, transform .22s ease; }
-.garde-det-enter-from, .garde-det-leave-to { opacity: 0; transform: translateX(-8px); }
-@media (prefers-reduced-motion: reduce) { .garde-chev, .garde-det-enter-active, .garde-det-leave-active, .garde-num { transition: none; } }
+/* Garde en cours : une ligne par personne (nom et métier à gauche, numéros à droite) ; cartes uniquement en mode « Gérer » */
+/* Un bloc par service (bandeau de titre), personnes à l'intérieur : avatar, nom et métier, DECT en grand et autres numéros en dessous */
+.garde-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 12px; align-items: start; }
+.garde-groups > .garde-filter { grid-column: 1 / -1; margin-bottom: 0; }
+.garde-groups > .garde-group { margin-top: 0; }
+.garde-group { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.garde-group-title { margin: 0; padding: 7px 12px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); font-weight: 700; }
+:root[data-theme="dark"] .garde-group-title { color: var(--text); }
+.garde-rows { list-style: none; margin: 0; padding: 0; font-size: .88rem; }
+.garde-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.garde-row:first-child { border-top: 0; }
+.garde-row .avatar { grid-row: 1; width: 36px; height: 36px; font-size: .8rem; }
+.garde-row-who { display: flex; flex-direction: column; min-width: 0; }
+.garde-row-who .muted { font-size: .8rem; }
+.garde-row-nums { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.garde-row-num { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--muted); }
+.garde-row-num small { font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; margin-right: 4px; }
+.garde-row-num b { color: var(--text); font-weight: 600; }
+.garde-row-num.main { order: -1; }
+.garde-row-num.main b { color: var(--primary); font-size: 1.15rem; font-weight: 700; }
+:root[data-theme="dark"] .garde-row-num.main b { color: var(--accent); }
+@media (max-width: 480px) { .garde-row { grid-template-columns: auto minmax(0, 1fr); } .garde-row-nums { grid-column: 2; align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 2px 14px; } }
 
 .manage-btn { padding: 2px 12px; font-size: .8rem; }
 .manage-btn[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
@@ -197,10 +214,8 @@ h2 { font-size: 1.15rem; }
 .row-actions button { padding: 0 8px; line-height: 1.3; font-size: .8rem; }
 .urgence-form { display: grid; gap: 8px; margin-top: 12px; padding: 12px; border: 1px dashed var(--accent); border-radius: 10px; background: var(--surface); }
 .add-btn { margin-top: 12px; border-style: dashed; }
-.chip-wrap { display: inline-flex; align-items: center; gap: 3px; }
 .mini { padding: 0 8px; font-size: .8125rem; line-height: 1.5; }
 .mini.add { border-style: dashed; }
-.person-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 
 @media (prefers-reduced-motion: reduce) { .pulse, .urgence-panel, .urgence-list li, .garde-item { animation: none; } }
 
@@ -247,9 +262,7 @@ button.danger { color: var(--danger); }
 .call-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 8px;
   background: var(--primary); color: var(--on-primary); text-decoration: none; font-size: .8rem;
-  transition: transform .15s, box-shadow .15s, filter .15s;
 }
-.call-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--glow); filter: brightness(1.08); }
 .call-btn b { font-size: .85rem; letter-spacing: .02em; }
 .call-type { font-size: .75rem; opacity: .85; text-transform: uppercase; letter-spacing: .05em; }
 .call-ico { font-size: .8rem; }
@@ -374,6 +387,7 @@ td.actions button + button { margin-left: 8px; }
 
 /* Écrans tactiles : cibles d'au moins 44 px pour les numéros d'appel (en fin de fichier pour l'emporter sur les règles de base) */
 @media (pointer: coarse) {
+  .garde-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 6px 14px; }
   .call-btn, .copy-btn { min-height: 44px; }
   .call-btn { padding: 8px 14px; font-size: .95rem; }
   .call-btn b { font-size: 1rem; }
@@ -383,7 +397,6 @@ td.actions button + button { margin-left: 8px; }
   .form button, .form select, .head button, .table-wrap button, .modal button, .filters select { min-height: 44px; }
   /* Barre d'urgence : boutons d'ouverture, numéro vital, numéros de garde et boutons du mode « Gérer » */
   .bar-btn, .vital, .manage-btn, .mini, .row-actions button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
-  .garde-item .garde-num { min-height: 44px; } /* reste en inline-block : le flex supprimerait l'espace entre le type et le numéro */
   .mini, .row-actions button { min-width: 44px; }
   .mail-btn { min-height: 44px; padding: 6px 14px; }
   /* Filtres actifs : pastilles, « Tout effacer » et croix de la recherche */
@@ -399,7 +412,6 @@ td.actions button + button { margin-left: 8px; }
   .add-btn { min-height: 44px; }
   .pagination button, .page-btn { min-height: 44px; min-width: 44px; }
   .card-title { display: inline-block; padding: 13px 0; margin: -13px 0; }
-  .garde-item .garde-name { min-height: 44px; }
   .bar-btn, .manage-btn, .mini { gap: 6px; }
   .bar-btn { padding: 6px 12px; }
   .manage-btn { padding: 6px 14px; }

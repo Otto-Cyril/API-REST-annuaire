@@ -1,10 +1,14 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { get, post, put, del } from '../api'
 import { useAuth } from '../stores/auth'
 import Icon from './Icon.vue'
+import { frDate, today, relativeDay, peopleOnDuty, groupByService } from '../garde'
+import { urgenceIcon } from '../urgence'
 
 const auth = useAuth()
+const router = useRouter()
 
 const REFRESH_MS = 60_000
 const numeros = ref([])
@@ -39,14 +43,6 @@ function stopManaging() {
 
 // Gestion de la garde en cours (admin connecté) : personnes et numéros de garde
 const gManaging = ref(false)
-// Cartes de la garde : chacune se déplie indépendamment ; en mode « Gérer », toutes sont dépliées
-const openIds = ref(new Set())
-const isOpen = (p) => gManaging.value || openIds.value.has(p.id)
-const toggleOpen = (p) => {
-  const ids = new Set(openIds.value)
-  if (!ids.delete(p.id)) ids.add(p.id)
-  openIds.value = ids
-}
 const gForm = ref(null) // null = fermé, sinon { kind: 'personne' | 'numero', id, ... }
 const gError = ref('')
 const gSaving = ref(false)
@@ -70,10 +66,10 @@ async function toggleGManaging() {
 function gEditPerson(p) {
   gForm.value = {
     kind: 'personne',
-    id: p ? p.id : 0,
-    libelle: p?.libelle ?? '',
-    serviceId: p?.service?.id ?? '',
-    metierId: p?.metier?.id ?? '',
+    id: p.id,
+    libelle: p.libelle,
+    serviceId: p.service?.id ?? '',
+    metierId: p.metier?.id ?? '',
   }
   gError.value = ''
 }
@@ -90,8 +86,7 @@ async function gSave() {
   try {
     if (f.kind === 'personne') {
       const body = { libelle: f.libelle.trim(), serviceId: Number(f.serviceId), metierId: Number(f.metierId) }
-      if (f.id === 0) await post('/personnel', body)
-      else await put(`/personnel/${f.id}`, body)
+      await put(`/personnel/${f.id}`, body)
     } else {
       const body = { numero: f.numero.trim(), type: f.type.trim(), personnelDeGardeId: f.personId }
       if (f.id === 0) await post('/numeros-garde', body)
@@ -107,10 +102,11 @@ async function gSave() {
 }
 
 async function gRemovePerson(p) {
-  if (!confirm(`Supprimer « ${p.libelle} » de la garde ?`)) return
+  const periodes = p.periodes.map((g) => `du ${frDate(g.dateDebut)} au ${frDate(g.dateFin)}`).join(', ')
+  if (!confirm(`Retirer « ${p.libelle} » de la garde (${periodes}) ?`)) return
   gError.value = ''
   try {
-    await del(`/personnel/${p.id}`)
+    for (const g of p.periodes) await del(`/gardes/${g.id}`)
     gForm.value = null
     await load()
   } catch (e) {
@@ -186,22 +182,25 @@ watch(() => auth.isAdmin, (admin) => {
   if (!admin) stopManaging()
 })
 
-const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
-
-// Teinte de l'avatar dérivée du nom : stable d'un chargement à l'autre, différente d'une personne à l'autre
-const hue = (s) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7)
-
 const tel = (n) => `tel:${n.replace(/\s/g, '')}`
 
-// Le modèle n'a pas de notion de « garde en cours » : le panneau liste tout le personnel de garde (100 max, limite de l'API) et défile.
-const GARDE_MAX = 100
+const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
+
+// Prochaine garde à venir (affichée seulement quand personne n'est de garde aujourd'hui) et filtre par service
+const prochaines = ref([])
+const prochaineJour = computed(() => (prochaines.value.length ? prochaines.value[0].periodes[0].dateDebut : null))
+const filtreService = ref(null) // null = tous les services
+const groupes = computed(() => groupByService(garde.value))
+const groupesAffiches = computed(() => (filtreService.value === null ? groupes.value : groupes.value.filter((g) => g.id === filtreService.value)))
 
 async function load() {
   try {
-    const [urgences, personnel] = await Promise.all([get('/numeros-urgence'), get('/personnel', { limit: GARDE_MAX })])
+    const [urgences, gardes] = await Promise.all([get('/numeros-urgence'), get('/gardes', { date: today() })])
     numeros.value = urgences.data
-    garde.value = personnel.data
-    total.value = personnel.total ?? personnel.data.length
+    garde.value = peopleOnDuty(gardes.data)
+    total.value = garde.value.length
+    if (filtreService.value !== null && !garde.value.some((p) => p.service.id === filtreService.value)) filtreService.value = null
+    prochaines.value = garde.value.length ? [] : peopleOnDuty((await get('/gardes/prochaines', { date: today() })).data)
     failed.value = false
   } catch {
     failed.value = true
@@ -247,7 +246,8 @@ onBeforeUnmount(() => clearInterval(timer))
         <ul v-else class="urgence-list">
           <li v-for="(n, i) in numeros" :key="n.id" :class="{ managed: managing }" :style="{ '--i': Math.min(i, 12) }">
             <a :href="tel(n.numero)" class="urgence-num">
-              <span>{{ n.libelle }}</span>
+              <span class="urgence-ico"><Icon :name="urgenceIcon(n.libelle)" /></span>
+              <span class="urgence-label">{{ n.libelle }}</span>
               <b>{{ n.numero }}</b>
             </a>
             <span v-if="managing" class="row-actions">
@@ -280,43 +280,71 @@ onBeforeUnmount(() => clearInterval(timer))
           </button>
         </div>
         <p v-if="failed" class="muted">Indisponible pour le moment.</p>
-        <p v-else-if="!garde.length" class="muted">Aucun personnel de garde enregistré.</p>
-        <ul v-else class="garde-list">
-          <li v-for="(p, i) in garde" :key="p.id" class="garde-item" :class="{ open: isOpen(p) }" :style="{ '--i': Math.min(i, 12) }">
-            <span class="avatar" aria-hidden="true" :style="{ '--h': hue(p.libelle) }">{{ initials(p.libelle) }}</span>
-            <button type="button" class="garde-name" :aria-expanded="isOpen(p)" :aria-controls="`garde-${p.id}`" @click="toggleOpen(p)">
-              {{ p.libelle }}
-              <Icon class="garde-chev" name="chevron-down" />
+        <template v-else-if="!garde.length">
+          <p class="muted">Aucune garde aujourd'hui.</p>
+          <div v-if="prochaines.length" class="garde-next">
+            <p class="garde-next-title">Prochaine garde, {{ relativeDay(prochaineJour, today()) }}</p>
+            <ul>
+              <li v-for="p in prochaines" :key="p.id">
+                <b>{{ p.libelle }}</b>
+                <span class="muted">{{ p.service.libelle }} · jusqu'au {{ frDate(p.periodes[0].dateFin) }}</span>
+              </li>
+            </ul>
+          </div>
+        </template>
+        <div v-else class="garde-groups">
+          <div v-if="groupes.length > 1" class="garde-filter" role="group" aria-label="Filtrer par service">
+            <button type="button" class="garde-chip" :aria-pressed="filtreService === null" @click="filtreService = null">Tous</button>
+            <button v-for="g in groupes" :key="g.id" type="button" class="garde-chip" :aria-pressed="filtreService === g.id" @click="filtreService = g.id">
+              {{ g.libelle }} <span class="count">{{ g.people.length }}</span>
             </button>
-            <Transition name="garde-det">
-            <div v-if="isOpen(p)" :id="`garde-${p.id}`" class="garde-details">
-              <span class="garde-tags">
-                <span class="garde-tag">{{ p.service.libelle }}</span>
-                <span class="garde-tag alt">{{ p.metier.libelle }}</span>
-              </span>
-              <span class="garde-nums">
-                <span v-for="n in p.numerosGarde" :key="n.id" class="chip-wrap">
-                  <a :href="tel(n.numero)" class="garde-num"><Icon name="phone" /><span>{{ n.type }}</span><b>{{ n.numero }}</b></a>
-                  <template v-if="gManaging">
-                    <button class="mini" :aria-label="`Modifier ${n.type} ${n.numero}`" title="Modifier" @click="gEditNumero(p, n)"><Icon name="edit" /></button>
-                    <button class="mini danger" :aria-label="`Supprimer ${n.type} ${n.numero}`" title="Supprimer" @click="gRemoveNumero(n)"><Icon name="close" /></button>
-                  </template>
+          </div>
+          <section v-for="g in groupesAffiches" :key="g.id" class="garde-group">
+            <h3 class="garde-group-title">{{ g.libelle }}</h3>
+            <ul v-if="!gManaging" class="garde-rows">
+              <li v-for="p in g.people" :key="p.id" class="garde-row">
+                <span class="avatar" aria-hidden="true">{{ initials(p.libelle) }}</span>
+                <div class="garde-row-who">
+                  <b>{{ p.libelle }}</b>
+                  <span class="muted">{{ p.metier.libelle }}</span>
+                </div>
+                <div class="garde-row-nums">
+                  <span v-for="n in p.numerosGarde" :key="n.id" class="garde-row-num" :class="{ main: n.type === 'DECT' }">
+                    <small>{{ n.type }}</small> <b>{{ n.numero }}</b>
+                  </span>
+                </div>
+              </li>
+            </ul>
+            <ul v-else class="garde-list">
+              <li v-for="p in g.people" :key="p.id" class="garde-item">
+                <span class="avatar" aria-hidden="true">{{ initials(p.libelle) }}</span>
+                <span class="garde-name">{{ p.libelle }}</span>
+                <div class="garde-details">
+                  <span class="garde-tags">
+                    <span class="garde-tag alt">{{ p.metier.libelle }}</span>
+                  </span>
+                  <span class="garde-nums">
+                    <span v-for="n in p.numerosGarde" :key="n.id" class="chip-wrap">
+                      <span class="garde-num"><Icon name="phone" /><span>{{ n.type }}</span><b>{{ n.numero }}</b></span>
+                      <button class="mini" :aria-label="`Modifier ${n.type} ${n.numero}`" title="Modifier" @click="gEditNumero(p, n)"><Icon name="edit" /></button>
+                      <button class="mini danger" :aria-label="`Supprimer ${n.type} ${n.numero}`" title="Supprimer" @click="gRemoveNumero(n)"><Icon name="close" /></button>
+                    </span>
+                    <button class="mini add" @click="gEditNumero(p, null)">+ numéro</button>
+                  </span>
+                </div>
+                <span class="person-actions">
+                  <button class="mini" @click="gEditPerson(p)"><Icon name="edit" /> Modifier</button>
+                  <button class="mini danger" @click="gRemovePerson(p)"><Icon name="close" /> Retirer de la garde</button>
                 </span>
-                <button v-if="gManaging" class="mini add" @click="gEditNumero(p, null)">+ numéro</button>
-              </span>
-            </div>
-            </Transition>
-            <span v-if="gManaging" class="person-actions">
-              <button class="mini" @click="gEditPerson(p)"><Icon name="edit" /> Modifier</button>
-              <button class="mini danger" @click="gRemovePerson(p)"><Icon name="close" /> Supprimer</button>
-            </span>
-          </li>
-        </ul>
+              </li>
+            </ul>
+          </section>
+        </div>
 
         <template v-if="gManaging">
           <form v-if="gForm" class="urgence-form" @submit.prevent="gSave">
             <template v-if="gForm.kind === 'personne'">
-              <strong>{{ gForm.id === 0 ? 'Nouvelle personne de garde' : 'Modifier la personne' }}</strong>
+              <strong>Modifier la personne</strong>
               <input v-model="gForm.libelle" maxlength="50" placeholder="Nom / libellé" aria-label="Nom" required />
               <select v-model="gForm.serviceId" aria-label="Service" required>
                 <option value="" disabled>Service…</option>
@@ -337,7 +365,7 @@ onBeforeUnmount(() => clearInterval(timer))
               <button type="button" @click="gForm = null">Annuler</button>
             </div>
           </form>
-          <button v-else class="add-btn" @click="gEditPerson(null)">+ Ajouter une personne de garde</button>
+          <button v-else class="add-btn" @click="router.push({ name: 'admin', params: { resource: 'gardes' } })">Planifier une garde</button>
           <p v-if="gError" class="error">{{ gError }}</p>
         </template>
       </div>

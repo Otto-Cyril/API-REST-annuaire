@@ -2,6 +2,9 @@
 // `toForm` convertit un élément lu (relations imbriquées) vers les champs envoyés à l'API.
 // `options` : ressource dont on charge la liste pour un <select> (valeur = id).
 
+// « 2026-06-10 » -> « 10/06/2026 »
+const frDate = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
+
 export const resources = {
   services: {
     title: 'Services',
@@ -68,7 +71,7 @@ export const resources = {
       { key: 'service', label: 'Service', get: (r) => r.service?.libelle },
       { key: 'metier', label: 'Métier', get: (r) => r.metier?.libelle },
       { key: 'email', label: 'E-mail' },
-      { key: 'telephone', label: 'Téléphone / poste' },
+      { key: 'telephone', label: 'Téléphone / DECT' },
     ],
     // optional : champ facultatif (une valeur vide est envoyée comme null) ; type : type de l'<input>.
     fields: [
@@ -77,7 +80,7 @@ export const resources = {
       { key: 'serviceId', label: 'Service', options: 'services', optionLabel: 'libelle' },
       { key: 'metierId', label: 'Métier', options: 'metiers', optionLabel: 'libelle' },
       { key: 'email', label: 'E-mail', max: 100, type: 'email', optional: true },
-      { key: 'telephone', label: 'Téléphone / poste', max: 50, optional: true },
+      { key: 'telephone', label: 'Téléphone / DECT', max: 50, optional: true },
     ],
     toForm: (r) => ({
       nom: r.nom,
@@ -87,6 +90,28 @@ export const resources = {
       email: r.email,
       telephone: r.telephone,
     }),
+  },
+  gardes: {
+    title: 'Planning des gardes',
+    path: '/gardes',
+    columns: [
+      { key: 'personnel', label: 'Personnel', get: (r) => r.personnelDeGarde?.libelle },
+      { key: 'dateDebut', label: 'Du', get: (r) => frDate(r.dateDebut) },
+      { key: 'dateFin', label: 'Au (inclus)', get: (r) => frDate(r.dateFin) },
+    ],
+    fields: [
+      {
+        key: 'personnelDeGardeId',
+        label: 'Personnel',
+        options: 'personnel',
+        optionLabel: 'libelle',
+        // /api/personnel est paginé (100 max par page) : on charge la première page.
+        params: { limit: 100 },
+      },
+      { key: 'dateDebut', label: 'Premier jour de garde', type: 'date' },
+      { key: 'dateFin', label: 'Dernier jour de garde (inclus)', type: 'date' },
+    ],
+    toForm: (r) => ({ personnelDeGardeId: r.personnelDeGarde?.id, dateDebut: r.dateDebut, dateFin: r.dateFin }),
   },
   'numeros-garde': {
     title: 'Numéros de garde',
