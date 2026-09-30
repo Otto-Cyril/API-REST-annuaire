@@ -9,8 +9,8 @@ describe('buildNavGroups', () => {
 
   it('regroupe les ressources et ajoute le journal dans « Suivi »', () => {
     expect(groups.map((g) => [g.id, g.items.map((i) => i.id)])).toEqual([
-      ['personnel', ['personnel']],
-      ['gardes', ['gardes', 'numeros-garde', 'numeros-urgence']],
+      ['gardes', ['personnel', 'gardes','numeros-garde']],
+      ['urgence', ['numeros-urgence']],
       ['referentiels', ['services', 'metiers']],
       ['suivi', ['traces']],
     ])

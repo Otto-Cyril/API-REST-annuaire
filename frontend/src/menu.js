@@ -1,8 +1,8 @@
 // Menu « Administration » de la barre latérale : regroupement des entrées et groupe de la page active (testé dans menu.test.js).
 
 const GROUPS = [
-  { id: 'personnel', label: 'Personnel', ids: ['personnel'] },
-  { id: 'gardes', label: 'Gardes', ids: ['gardes', 'numeros-garde', 'numeros-urgence'] },
+  { id: 'gardes', label: 'Gardes', ids: ['personnel', 'gardes', 'numeros-garde'] },
+  { id: 'urgence', label: 'Urgences', ids: ['numeros-urgence'] },
   { id: 'referentiels', label: 'Référentiels', ids: ['services', 'metiers'] },
   { id: 'suivi', label: 'Suivi', ids: ['traces'] },
 ]
