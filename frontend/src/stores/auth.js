@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { tokenUsername } from '../jwt'
 
 const KEY = 'annuaire_jwt'
 
@@ -14,6 +15,7 @@ function read() {
 export const useAuth = defineStore('auth', () => {
   const token = ref(read())
   const isAdmin = computed(() => !!token.value)
+  const username = computed(() => tokenUsername(token.value))
 
   function setToken(t) {
     token.value = t
@@ -37,5 +39,5 @@ export const useAuth = defineStore('auth', () => {
     })
   }
 
-  return { token, isAdmin, login, logout }
+  return { token, isAdmin, username, login, logout }
 })

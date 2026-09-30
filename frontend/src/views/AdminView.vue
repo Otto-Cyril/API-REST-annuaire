@@ -4,6 +4,7 @@ import { get, post, put, del } from '../api'
 import { resources } from '../resources'
 import Pagination from '../components/Pagination.vue'
 import { pageTitle } from '../router'
+import { showToast } from '../toast'
 
 const props = defineProps({ resource: String })
 const cfg = computed(() => resources[props.resource])
@@ -54,19 +55,27 @@ function open(row) {
   fieldErrors.value = {}
 }
 
+// Valeurs du formulaire -> corps de la requête
+function toBody(values, fields = cfg.value.fields) {
+  const body = { ...values }
+  for (const f of fields) {
+    if (f.options) body[f.key] = Number(body[f.key]) // ids envoyés en entiers
+    else if (f.optional && body[f.key] === '') body[f.key] = null // champ facultatif vidé
+  }
+  return body
+}
+
 async function save() {
   saving.value = true
   formError.value = ''
   fieldErrors.value = {}
-  const body = { ...form }
-  for (const f of cfg.value.fields) {
-    if (f.options) body[f.key] = Number(body[f.key]) // ids envoyés en entiers
-    else if (f.optional && body[f.key] === '') body[f.key] = null // champ facultatif vidé
-  }
+  const body = toBody(form)
   try {
-    if (editing.value === 0) await post(cfg.value.path, body)
+    const creating = editing.value === 0
+    if (creating) await post(cfg.value.path, body)
     else await put(`${cfg.value.path}/${editing.value}`, body)
     editing.value = null
+    showToast(creating ? 'Élément ajouté.' : 'Modification enregistrée.')
     await load()
   } catch (e) {
     formError.value = e.message
@@ -83,8 +92,23 @@ async function remove(row) {
   error.value = ''
   try {
     await del(`${cfg.value.path}/${row.id}`)
+    const c = cfg.value
+    showToast('Élément supprimé.', c.undoable ? { label: 'Annuler', run: () => restore(c, row) } : null)
     if (rows.value.length === 1 && page.value > 1) page.value--
     else await load()
+  } catch (e) {
+    error.value = e.message
+  }
+}
+
+// Annule une suppression en recréant l'élément (avec un nouvel id) ; on ne recharge que si la même ressource est toujours affichée.
+async function restore({ path, fields, toForm }, row) {
+  const initial = toForm ? toForm(row) : row
+  const body = toBody(Object.fromEntries(fields.map((f) => [f.key, initial[f.key] ?? ''])), fields)
+  try {
+    await post(path, body)
+    showToast('Élément rétabli.')
+    if (cfg.value?.path === path) await load()
   } catch (e) {
     error.value = e.message
   }

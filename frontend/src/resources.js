@@ -1,6 +1,7 @@
 // Description des ressources administrables : colonnes du tableau et champs du formulaire.
 // `toForm` convertit un élément lu (relations imbriquées) vers les champs envoyés à l'API.
 // `options` : ressource dont on charge la liste pour un <select> (valeur = id).
+// `undoable` : la suppression peut être annulée en recréant l'élément (aucune donnée liée ne dépend de lui ; il reçoit un nouvel id).
 
 // « 2026-06-10 » -> « 10/06/2026 »
 const frDate = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
@@ -35,6 +36,7 @@ export const resources = {
   'numeros-urgence': {
     title: "Numéros d'urgence",
     path: '/numeros-urgence',
+    undoable: true,
     columns: [
       { key: 'libelle', label: 'Libellé' },
       { key: 'numero', label: 'Numéro' },
@@ -94,6 +96,7 @@ export const resources = {
   gardes: {
     title: 'Planning des gardes',
     path: '/gardes',
+    undoable: true,
     columns: [
       { key: 'personnel', label: 'Personnel', get: (r) => r.personnelDeGarde?.libelle },
       { key: 'dateDebut', label: 'Du', get: (r) => frDate(r.dateDebut) },
@@ -116,6 +119,7 @@ export const resources = {
   'numeros-garde': {
     title: 'Numéros de garde',
     path: '/numeros-garde',
+    undoable: true,
     columns: [
       { key: 'numero', label: 'Numéro' },
       { key: 'type', label: 'Type' },
