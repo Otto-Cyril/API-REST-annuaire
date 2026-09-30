@@ -3,10 +3,12 @@ import Pagination from '../components/Pagination.vue'
 import CallNumber from '../components/CallNumber.vue'
 import DirectoryFilters from '../components/DirectoryFilters.vue'
 import Icon from '../components/Icon.vue'
+import { useAuth } from '../stores/auth'
 import { useDirectory } from '../composables/useDirectory'
 
+const auth = useAuth()
 const { filters, page, list, meta, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
-  useDirectory('/personnes')
+  useDirectory('/personnes', { requireFilter: true })
 
 const fullName = (p) => `${p.prenom} ${p.nom}`
 </script>
@@ -25,11 +27,16 @@ const fullName = (p) => `${p.prenom} ${p.nom}`
     @submit="load"
   />
 
-  <p v-if="!error && !(loading && !list.length)" class="result-count muted" aria-live="polite">{{ countLabel }}</p>
+  <p v-if="hasFilters && !error && !(loading && !list.length)" class="result-count muted" aria-live="polite">{{ countLabel }}</p>
 
   <div v-if="error" class="error-box" role="alert">
     <p class="error">{{ error }}</p>
     <button type="button" @click="load">Réessayer</button>
+  </div>
+
+  <div v-else-if="!hasFilters" class="empty">
+    <p><b>Commencez votre recherche</b></p>
+    <p class="muted">Saisissez un nom, ou choisissez un service ou un métier, pour afficher le personnel.</p>
   </div>
 
   <ul v-else-if="loading && !list.length" class="cards" aria-busy="true" aria-label="Chargement">
@@ -61,9 +68,16 @@ const fullName = (p) => `${p.prenom} ${p.nom}`
         <a v-if="p.email" :href="`mailto:${p.email}`" class="mail-btn" :aria-label="`Écrire à ${fullName(p)}`">
           <Icon name="mail" /> {{ p.email }}
         </a>
+        <RouterLink
+          v-if="auth.isAdmin"
+          :to="{ name: 'personne-edit', params: { id: p.id } }"
+          class="edit-btn"
+          :aria-label="`Modifier la fiche de ${fullName(p)}`"
+          title="Modifier la fiche"
+        ><Icon name="edit" /></RouterLink>
       </div>
     </li>
   </ul>
 
-  <Pagination :page="page" :total-pages="meta.totalPages" :total="meta.total" @change="page = $event" />
+  <Pagination v-if="hasFilters" :page="page" :total-pages="meta.totalPages" :total="meta.total" @change="page = $event" />
 </template>

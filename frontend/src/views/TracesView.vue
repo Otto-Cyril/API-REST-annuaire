@@ -60,14 +60,16 @@ onMounted(load)
         <option value="Suppression">Suppression</option>
       </select>
     </label>
-    <label>
-      Du
-      <input v-model="filters.from" type="date" :max="filters.to || undefined" />
-    </label>
-    <label>
-      Au (inclus)
-      <input v-model="filters.to" type="date" :min="filters.from || undefined" />
-    </label>
+    <div class="trace-dates">
+      <label>
+        Du
+        <input v-model="filters.from" type="date" :max="filters.to || undefined" />
+      </label>
+      <label>
+        Au (inclus)
+        <input v-model="filters.to" type="date" :min="filters.from || undefined" />
+      </label>
+    </div>
     <div class="actions">
       <button class="primary">Filtrer</button>
       <button v-if="hasFilters || Object.values(filters).some(Boolean)" type="button" @click="reset">Réinitialiser</button>

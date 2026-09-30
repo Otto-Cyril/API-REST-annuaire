@@ -5,7 +5,8 @@ import { get } from '../api'
 // Liste paginée avec recherche, filtres service/métier et tri, dont l'état vit dans l'URL
 // (?q=&service=&metier=&sort=&page=) : lien partageable, retour arrière depuis une fiche.
 // `path` : ressource de l'API (ex. '/personnel', '/personnes').
-export function useDirectory(path) {
+// `requireFilter` : ne charge rien (liste vide) tant qu'aucune recherche ni aucun filtre n'est saisi.
+export function useDirectory(path, { requireFilter = false } = {}) {
   const route = useRoute()
   const router = useRouter()
 
@@ -48,6 +49,22 @@ export function useDirectory(path) {
     loading.value = true
     error.value = ''
     syncUrl()
+    if (requireFilter && !hasFilters.value) {
+      list.value = []
+      meta.total = 0
+      meta.totalPages = 1
+      loading.value = false
+      // Seul le total est demandé (une ligne) : il alimente le compteur « Personnel » sans afficher de nom.
+      if (overall.value === null) {
+        try {
+          const res = await get(path, { limit: 1 })
+          if (mine === seq) overall.value = res.total ?? res.data.length
+        } catch {
+          /* compteur indisponible : il retombe sur 0 */
+        }
+      }
+      return
+    }
     try {
       const res = await get(path, { ...filters, page: page.value })
       if (mine !== seq) return // une requête plus récente a pris le relais

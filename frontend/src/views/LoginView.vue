@@ -30,17 +30,19 @@ async function submit() {
 <template>
   <section class="login">
     <h1>Connexion</h1>
-    <form class="form narrow" @submit.prevent="submit">
-      <label>
-        Identifiant
-        <input v-model="username" autocomplete="username" required autofocus />
-      </label>
-      <label>
-        Mot de passe
-        <input v-model="password" type="password" autocomplete="current-password" required />
-      </label>
-      <p v-if="error" class="error">{{ error }}</p>
-      <button class="primary" :disabled="busy">{{ busy ? 'Connexion…' : 'Se connecter' }}</button>
+    <form class="edit-card narrow" @submit.prevent="submit">
+      <div class="edit-grid one">
+        <label>
+          <span class="edit-label">Identifiant</span>
+          <input v-model="username" autocomplete="username" required autofocus />
+        </label>
+        <label>
+          <span class="edit-label">Mot de passe</span>
+          <input v-model="password" type="password" autocomplete="current-password" required />
+        </label>
+      </div>
+      <p v-if="error" class="error" role="alert">{{ error }}</p>
+      <button class="primary submit-full" :disabled="busy">{{ busy ? 'Connexion…' : 'Se connecter' }}</button>
     </form>
   </section>
 </template>

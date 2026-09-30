@@ -138,22 +138,26 @@ watch(cfg, (c) => c && (document.title = pageTitle(`${c.title} (admin)`)), { imm
 
     <p v-if="error" class="error">{{ error }}</p>
 
-    <form v-if="editing !== null" class="form form-page" @submit.prevent="save">
-      <h2>{{ editing === 0 ? 'Nouvel élément' : `Modifier #${editing}` }}</h2>
-      <label v-for="f in cfg.fields" :key="f.key">
-        {{ f.label }}
-        <select v-if="f.options" v-model="form[f.key]" required>
-          <option value="" disabled>Choisir…</option>
-          <option v-for="o in options[f.options] ?? []" :key="o.id" :value="o.id">{{ o[f.optionLabel] }}</option>
-        </select>
-        <input v-else v-model="form[f.key]" :type="f.type ?? 'text'" :maxlength="f.max" :required="!f.optional" />
-        <small v-for="m in fieldErrors[f.key] ?? []" :key="m" class="error" role="alert">{{ m }}</small>
-      </label>
-      <p v-if="formError" class="error" role="alert">{{ formError }}</p>
-      <div class="actions">
-        <button class="primary" :disabled="saving">Enregistrer</button>
-        <button type="button" @click="editing = null">Annuler</button>
+    <form v-if="editing !== null" class="edit-card" @submit.prevent="save">
+      <header class="edit-head">
+        <h2>{{ editing === 0 ? 'Nouvel élément' : `Modifier #${editing}` }}</h2>
+      </header>
+      <div class="edit-grid">
+        <label v-for="f in cfg.fields" :key="f.key" :class="{ wide: f.wide }">
+          <span class="edit-label">{{ f.label }}<em v-if="f.optional"> (facultatif)</em></span>
+          <select v-if="f.options" v-model="form[f.key]" required>
+            <option value="" disabled>Choisir…</option>
+            <option v-for="o in options[f.options] ?? []" :key="o.id" :value="o.id">{{ o[f.optionLabel] }}</option>
+          </select>
+          <input v-else v-model="form[f.key]" :type="f.type ?? 'text'" :maxlength="f.max" :required="!f.optional" />
+          <small v-for="m in fieldErrors[f.key] ?? []" :key="m" class="error" role="alert">{{ m }}</small>
+        </label>
       </div>
+      <p v-if="formError" class="error" role="alert">{{ formError }}</p>
+      <footer class="edit-actions">
+        <button type="button" @click="editing = null">Annuler</button>
+        <button class="primary" :disabled="saving">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</button>
+      </footer>
     </form>
 
     <div class="table-wrap">

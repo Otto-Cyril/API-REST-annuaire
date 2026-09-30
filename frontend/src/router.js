@@ -18,6 +18,13 @@ const router = createRouter({
       meta: { admin: true, title: 'Modifier la fiche' },
     },
     {
+      path: '/admin/personnes/:id(\\d+)/modifier',
+      name: 'personne-edit',
+      component: () => import('./views/EditPersonneView.vue'),
+      props: true,
+      meta: { admin: true, title: 'Modifier la fiche' },
+    },
+    {
       path: '/admin/traces',
       name: 'traces',
       component: () => import('./views/TracesView.vue'),

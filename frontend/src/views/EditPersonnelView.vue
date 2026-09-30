@@ -132,45 +132,53 @@ onMounted(load)
 </script>
 
 <template>
+  <div class="edit-wrap">
   <a :href="backHref" class="back" @click.prevent="goBack"><Icon name="arrow-left" /> {{ backLabel }}</a>
 
   <p v-if="loadError" class="error">{{ loadError }}</p>
 
   <template v-else-if="p">
-    <h1>Modifier la fiche</h1>
+    <form class="edit-card" @submit.prevent="save">
+      <header class="edit-head">
+        <div>
+          <h1>{{ p.libelle }}</h1>
+          <p class="muted">Modifier la fiche du personnel de garde</p>
+        </div>
+      </header>
 
-    <form class="form form-page" @submit.prevent="save">
-      <h2>Informations</h2>
-      <label>
-        Libellé
-        <input v-model="form.libelle" maxlength="50" required />
-        <small v-for="m in fieldErrors.libelle ?? []" :key="m" class="error">{{ m }}</small>
-      </label>
-      <label>
-        Service
-        <select v-model="form.serviceId" required>
-          <option value="" disabled>Choisir…</option>
-          <option v-for="s in services" :key="s.id" :value="s.id">{{ s.libelle }}</option>
-        </select>
-        <small v-for="m in fieldErrors.service ?? fieldErrors.serviceId ?? []" :key="m" class="error">{{ m }}</small>
-      </label>
-      <label>
-        Métier
-        <select v-model="form.metierId" required>
-          <option value="" disabled>Choisir…</option>
-          <option v-for="m in metiers" :key="m.id" :value="m.id">{{ m.libelle }}</option>
-        </select>
-        <small v-for="m in fieldErrors.metier ?? fieldErrors.metierId ?? []" :key="m" class="error">{{ m }}</small>
-      </label>
-      <p v-if="formError" class="error">{{ formError }}</p>
-      <div class="actions">
-        <button class="primary" :disabled="saving">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</button>
-        <span v-if="saved" class="ok" role="status"><Icon name="check" /> Enregistré</span>
+      <div class="edit-grid">
+        <label class="wide">
+          <span class="edit-label">Libellé</span>
+          <input v-model="form.libelle" maxlength="50" required />
+          <small v-for="m in fieldErrors.libelle ?? []" :key="m" class="error">{{ m }}</small>
+        </label>
+        <label>
+          <span class="edit-label">Service</span>
+          <select v-model="form.serviceId" required>
+            <option value="" disabled>Choisir…</option>
+            <option v-for="s in services" :key="s.id" :value="s.id">{{ s.libelle }}</option>
+          </select>
+          <small v-for="m in fieldErrors.service ?? fieldErrors.serviceId ?? []" :key="m" class="error">{{ m }}</small>
+        </label>
+        <label>
+          <span class="edit-label">Métier</span>
+          <select v-model="form.metierId" required>
+            <option value="" disabled>Choisir…</option>
+            <option v-for="m in metiers" :key="m.id" :value="m.id">{{ m.libelle }}</option>
+          </select>
+          <small v-for="m in fieldErrors.metier ?? fieldErrors.metierId ?? []" :key="m" class="error">{{ m }}</small>
+        </label>
       </div>
+
+      <p v-if="formError" class="error" role="alert">{{ formError }}</p>
+      <footer class="edit-actions">
+        <span v-if="saved" class="ok" role="status"><Icon name="check" /> Enregistré</span>
+        <button class="primary" :disabled="saving">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</button>
+      </footer>
     </form>
 
-    <section class="form form-page" aria-labelledby="num-title">
-      <h2 id="num-title">Numéros de garde</h2>
+    <section class="edit-card" aria-labelledby="num-title">
+      <header class="edit-head"><h2 id="num-title">Numéros de garde</h2></header>
       <p v-if="listError" class="error">{{ listError }}</p>
       <p v-if="!numbers.length" class="muted">Aucun numéro pour le moment.</p>
 
@@ -216,4 +224,5 @@ onMounted(load)
     <span class="sk-line w60"></span>
     <span class="sk-line w40"></span>
   </article>
+  </div>
 </template>

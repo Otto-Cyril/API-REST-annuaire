@@ -8,7 +8,7 @@ import { useDirectory } from '../composables/useDirectory'
 
 const auth = useAuth()
 const { filters, page, list, meta, overall, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
-  useDirectory('/personnel')
+  useDirectory('/personnel', { requireFilter: true })
 </script>
 
 <template>
@@ -33,11 +33,16 @@ const { filters, page, list, meta, overall, services, metiers, loading, error, h
     @submit="load"
   />
 
-  <p v-if="!error && !(loading && !list.length)" class="result-count muted" aria-live="polite">{{ countLabel }}</p>
+  <p v-if="hasFilters && !error && !(loading && !list.length)" class="result-count muted" aria-live="polite">{{ countLabel }}</p>
 
   <div v-if="error" class="error-box" role="alert">
     <p class="error">{{ error }}</p>
     <button type="button" @click="load">Réessayer</button>
+  </div>
+
+  <div v-else-if="!hasFilters" class="empty">
+    <p><b>Commencez votre recherche</b></p>
+    <p class="muted">Saisissez un nom, ou choisissez un service ou un métier, pour afficher le personnel de garde.</p>
   </div>
 
   <ul v-else-if="loading && !list.length" class="cards" aria-busy="true" aria-label="Chargement">
@@ -76,5 +81,5 @@ const { filters, page, list, meta, overall, services, metiers, loading, error, h
     </li>
   </ul>
 
-  <Pagination :page="page" :total-pages="meta.totalPages" :total="meta.total" @change="page = $event" />
+  <Pagination v-if="hasFilters" :page="page" :total-pages="meta.totalPages" :total="meta.total" @change="page = $event" />
 </template>

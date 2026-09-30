@@ -1,6 +1,7 @@
 // Description des ressources administrables : colonnes du tableau et champs du formulaire.
 // `toForm` convertit un élément lu (relations imbriquées) vers les champs envoyés à l'API.
 // `options` : ressource dont on charge la liste pour un <select> (valeur = id).
+// `wide` : champ affiché sur toute la largeur du formulaire (sinon deux colonnes).
 // `undoable` : la suppression peut être annulée en recréant l'élément (aucune donnée liée ne dépend de lui ; il reçoit un nouvel id).
 
 // « 2026-06-10 » -> « 10/06/2026 »
@@ -28,7 +29,7 @@ export const resources = {
       { key: 'prenom', label: 'Prénom' },
     ],
     fields: [
-      { key: 'libelle', label: 'Libellé', max: 50 },
+      { key: 'libelle', label: 'Libellé', max: 50, wide: true },
       { key: 'nom', label: 'Nom', max: 50 },
       { key: 'prenom', label: 'Prénom', max: 50 },
     ],
@@ -56,7 +57,7 @@ export const resources = {
       { key: 'metier', label: 'Métier', get: (r) => r.metier?.libelle },
     ],
     fields: [
-      { key: 'libelle', label: 'Libellé', max: 50 },
+      { key: 'libelle', label: 'Libellé', max: 50, wide: true },
       { key: 'serviceId', label: 'Service', options: 'services', optionLabel: 'libelle' },
       { key: 'metierId', label: 'Métier', options: 'metiers', optionLabel: 'libelle' },
     ],
@@ -82,7 +83,7 @@ export const resources = {
       { key: 'prenom', label: 'Prénom', max: 50 },
       { key: 'serviceId', label: 'Service', options: 'services', optionLabel: 'libelle' },
       { key: 'metierId', label: 'Métier', options: 'metiers', optionLabel: 'libelle' },
-      { key: 'email', label: 'E-mail', max: 100, type: 'email', optional: true },
+      { key: 'email', label: 'E-mail', max: 100, type: 'email', optional: true, wide: true },
       { key: 'telephone', label: 'Téléphone', max: 50, optional: true },
       { key: 'dect', label: 'DECT', max: 50, optional: true },
     ],
@@ -111,6 +112,7 @@ export const resources = {
         label: 'Personnel',
         options: 'personnel',
         optionLabel: 'libelle',
+        wide: true,
         // /api/personnel est paginé (100 max par page) : on charge la première page.
         params: { limit: 100 },
       },
@@ -136,6 +138,7 @@ export const resources = {
         label: 'Personnel',
         options: 'personnel',
         optionLabel: 'libelle',
+        wide: true,
         // /api/personnel est paginé (100 max par page) : on charge la première page.
         params: { limit: 100 },
       },
