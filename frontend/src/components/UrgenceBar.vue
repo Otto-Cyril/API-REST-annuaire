@@ -292,7 +292,7 @@ onBeforeUnmount(() => clearInterval(timer))
             </ul>
           </div>
         </template>
-        <div v-else class="garde-groups">
+        <div v-else class="garde-groups" :class="{ managing: gManaging }">
           <div v-if="groupes.length > 1" class="garde-filter" role="group" aria-label="Filtrer par service">
             <button type="button" class="garde-chip" :aria-pressed="filtreService === null" @click="filtreService = null">Tous</button>
             <button v-for="g in groupes" :key="g.id" type="button" class="garde-chip" :aria-pressed="filtreService === g.id" @click="filtreService = g.id">

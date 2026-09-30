@@ -204,6 +204,12 @@ h2 { font-size: 1.15rem; }
 .garde-row-num.main { order: -1; }
 .garde-row-num.main b { color: var(--primary); font-size: 1.15rem; font-weight: 700; }
 :root[data-theme="dark"] .garde-row-num.main b { color: var(--accent); }
+/* Mode « Gérer » : un bloc par ligne (pleine largeur) et chaque personne sur une seule ligne : nom, métier + numéros, actions */
+.garde-groups.managing { grid-template-columns: minmax(0, 1fr); max-height: none; }
+@media (min-width: 900px) {
+  .garde-groups.managing .garde-item { grid-template-columns: auto 11rem minmax(0, 1fr) auto; }
+  .garde-groups.managing .garde-item .person-actions { grid-column: 4; grid-row: 1; margin-top: 0; flex-wrap: nowrap; }
+}
 @media (max-width: 480px) { .garde-row { grid-template-columns: auto minmax(0, 1fr); } .garde-row-nums { grid-column: 2; align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 2px 14px; } }
 
 .manage-btn { padding: 2px 12px; font-size: .8rem; }
