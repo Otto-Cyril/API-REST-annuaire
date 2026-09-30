@@ -26,7 +26,7 @@ watchEffect(async () => {
 </script>
 
 <template>
-  <RouterLink to="/" class="back"><Icon name="arrow-left" /> Retour à la liste</RouterLink>
+  <RouterLink to="/garde" class="back"><Icon name="arrow-left" /> Retour à la liste</RouterLink>
   <p v-if="error" class="error">{{ error }}</p>
   <article v-else-if="p" class="fiche">
     <header class="fiche-head">

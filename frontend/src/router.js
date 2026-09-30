@@ -4,8 +4,9 @@ import { useAuth } from './stores/auth'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'home', component: () => import('./views/HomeView.vue'), meta: { title: '' } },
-    { path: '/annuaire', name: 'annuaire', component: () => import('./views/AnnuaireView.vue'), meta: { title: 'Annuaire du personnel' } },
+    { path: '/', name: 'annuaire', component: () => import('./views/AnnuaireView.vue'), meta: { title: 'Annuaire du personnel' } },
+    { path: '/garde', name: 'garde', component: () => import('./views/HomeView.vue'), meta: { title: 'Personnel de garde' } },
+    { path: '/annuaire', redirect: '/' },
     { path: '/personnel/:id(\\d+)', name: 'fiche', component: () => import('./views/FicheView.vue'), props: true, meta: { title: 'Fiche' } },
     { path: '/connexion', name: 'login', component: () => import('./views/LoginView.vue'), meta: { title: 'Connexion' } },
     { path: '/admin', redirect: '/admin/personnel' },

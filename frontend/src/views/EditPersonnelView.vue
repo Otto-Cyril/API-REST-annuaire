@@ -12,9 +12,9 @@ const router = useRouter()
 // vue-router garde la page précédente dans history.state.back ; la page de connexion n'a pas d'intérêt comme retour.
 const previous = window.history.state?.back
 const hasBack = typeof previous === 'string' && previous.startsWith('/') && !previous.startsWith('/connexion')
-const backHref = hasBack ? router.resolve(previous).href : '/'
+const backHref = hasBack ? router.resolve(previous).href : '/garde'
 const backLabel = !hasBack ? 'Retour à la liste' : previous.startsWith('/personnel/') ? 'Retour à la fiche' : previous.startsWith('/admin') ? "Retour à l'administration" : 'Retour à la liste'
-const goBack = () => (hasBack ? router.back() : router.push('/'))
+const goBack = () => (hasBack ? router.back() : router.push('/garde'))
 
 const p = ref(null)
 const services = ref([])

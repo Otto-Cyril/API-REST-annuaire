@@ -35,8 +35,8 @@ watch(() => route.fullPath, () => (open.value = false))
 
       <nav class="nav">
         <p class="nav-title">Navigation</p>
-        <RouterLink to="/annuaire" class="nav-item" active-class="active">Annuaire du personnel</RouterLink>
-        <RouterLink to="/" class="nav-item" exact-active-class="active">Personnel de garde</RouterLink>
+        <RouterLink to="/" class="nav-item" exact-active-class="active">Annuaire du personnel</RouterLink>
+        <RouterLink to="/garde" class="nav-item" active-class="active">Personnel de garde</RouterLink>
 
         <template v-if="auth.isAdmin">
           <p class="nav-title">Administration</p>
