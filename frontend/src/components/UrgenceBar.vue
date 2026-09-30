@@ -39,6 +39,14 @@ function stopManaging() {
 
 // Gestion de la garde en cours (admin connecté) : personnes et numéros de garde
 const gManaging = ref(false)
+// Cartes de la garde : chacune se déplie indépendamment ; en mode « Gérer », toutes sont dépliées
+const openIds = ref(new Set())
+const isOpen = (p) => gManaging.value || openIds.value.has(p.id)
+const toggleOpen = (p) => {
+  const ids = new Set(openIds.value)
+  if (!ids.delete(p.id)) ids.add(p.id)
+  openIds.value = ids
+}
 const gForm = ref(null) // null = fermé, sinon { kind: 'personne' | 'numero', id, ... }
 const gError = ref('')
 const gSaving = ref(false)
@@ -180,17 +188,20 @@ watch(() => auth.isAdmin, (admin) => {
 
 const initials = (s) => s.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
 
+// Teinte de l'avatar dérivée du nom : stable d'un chargement à l'autre, différente d'une personne à l'autre
+const hue = (s) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7)
+
 const tel = (n) => `tel:${n.replace(/\s/g, '')}`
 
-// Le modèle n'a pas de notion de « garde en cours » : le panneau montre les premières personnes par ordre alphabétique.
-const GARDE_EN_COURS = 8
+// Le modèle n'a pas de notion de « garde en cours » : le panneau liste tout le personnel de garde (100 max, limite de l'API) et défile.
+const GARDE_MAX = 100
 
 async function load() {
   try {
-    const [urgences, personnel] = await Promise.all([get('/numeros-urgence'), get('/personnel', { limit: GARDE_EN_COURS })])
+    const [urgences, personnel] = await Promise.all([get('/numeros-urgence'), get('/personnel', { limit: GARDE_MAX })])
     numeros.value = urgences.data
     garde.value = personnel.data
-    total.value = personnel.data.length
+    total.value = personnel.total ?? personnel.data.length
     failed.value = false
   } catch {
     failed.value = true
@@ -271,20 +282,30 @@ onBeforeUnmount(() => clearInterval(timer))
         <p v-if="failed" class="muted">Indisponible pour le moment.</p>
         <p v-else-if="!garde.length" class="muted">Aucun personnel de garde enregistré.</p>
         <ul v-else class="garde-list">
-          <li v-for="(p, i) in garde" :key="p.id" class="garde-item" :style="{ '--i': Math.min(i, 12) }">
-            <span class="avatar" aria-hidden="true">{{ initials(p.libelle) }}</span>
-            <RouterLink :to="{ name: 'fiche', params: { id: p.id } }" class="garde-name">{{ p.libelle }}</RouterLink>
-            <span class="muted">{{ p.service.libelle }} · {{ p.metier.libelle }}</span>
-            <span class="garde-nums">
-              <span v-for="n in p.numerosGarde" :key="n.id" class="chip-wrap">
-                <a :href="tel(n.numero)" class="chip">{{ n.type }} <b>{{ n.numero }}</b></a>
-                <template v-if="gManaging">
-                  <button class="mini" :aria-label="`Modifier ${n.type} ${n.numero}`" title="Modifier" @click="gEditNumero(p, n)"><Icon name="edit" /></button>
-                  <button class="mini danger" :aria-label="`Supprimer ${n.type} ${n.numero}`" title="Supprimer" @click="gRemoveNumero(n)"><Icon name="close" /></button>
-                </template>
+          <li v-for="(p, i) in garde" :key="p.id" class="garde-item" :class="{ open: isOpen(p) }" :style="{ '--i': Math.min(i, 12) }">
+            <span class="avatar" aria-hidden="true" :style="{ '--h': hue(p.libelle) }">{{ initials(p.libelle) }}</span>
+            <button type="button" class="garde-name" :aria-expanded="isOpen(p)" :aria-controls="`garde-${p.id}`" @click="toggleOpen(p)">
+              {{ p.libelle }}
+              <Icon class="garde-chev" name="chevron-down" />
+            </button>
+            <Transition name="garde-det">
+            <div v-if="isOpen(p)" :id="`garde-${p.id}`" class="garde-details">
+              <span class="garde-tags">
+                <span class="garde-tag">{{ p.service.libelle }}</span>
+                <span class="garde-tag alt">{{ p.metier.libelle }}</span>
               </span>
-              <button v-if="gManaging" class="mini add" @click="gEditNumero(p, null)">+ numéro</button>
-            </span>
+              <span class="garde-nums">
+                <span v-for="n in p.numerosGarde" :key="n.id" class="chip-wrap">
+                  <a :href="tel(n.numero)" class="garde-num"><Icon name="phone" /><span>{{ n.type }}</span><b>{{ n.numero }}</b></a>
+                  <template v-if="gManaging">
+                    <button class="mini" :aria-label="`Modifier ${n.type} ${n.numero}`" title="Modifier" @click="gEditNumero(p, n)"><Icon name="edit" /></button>
+                    <button class="mini danger" :aria-label="`Supprimer ${n.type} ${n.numero}`" title="Supprimer" @click="gRemoveNumero(n)"><Icon name="close" /></button>
+                  </template>
+                </span>
+                <button v-if="gManaging" class="mini add" @click="gEditNumero(p, null)">+ numéro</button>
+              </span>
+            </div>
+            </Transition>
             <span v-if="gManaging" class="person-actions">
               <button class="mini" @click="gEditPerson(p)"><Icon name="edit" /> Modifier</button>
               <button class="mini danger" @click="gRemovePerson(p)"><Icon name="close" /> Supprimer</button>
