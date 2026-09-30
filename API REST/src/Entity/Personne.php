@@ -42,6 +42,11 @@ class Personne
     #[Groups(['personne:read', 'personne:write'])]
     private ?string $telephone = null;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Assert\Length(max: 50)]
+    #[Groups(['personne:read', 'personne:write'])]
+    private ?string $dect = null;
+
     // service/metier sont résolus et affectés explicitement par le contrôleur
     // (à partir de serviceId/metierId reçus en entrée), pas désérialisés directement.
     #[ORM\ManyToOne(targetEntity: Service::class)]
@@ -105,6 +110,18 @@ class Personne
     public function setTelephone(?string $telephone): static
     {
         $this->telephone = $telephone;
+
+        return $this;
+    }
+
+    public function getDect(): ?string
+    {
+        return $this->dect;
+    }
+
+    public function setDect(?string $dect): static
+    {
+        $this->dect = $dect;
 
         return $this;
     }

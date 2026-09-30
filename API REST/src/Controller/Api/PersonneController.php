@@ -91,7 +91,7 @@ class PersonneController extends AbstractApiController
 
     /**
      * Crée une personne à partir du corps JSON.
-     * Champs modifiables : nom, prenom, email (optionnel), telephone (optionnel) ; serviceId et metierId (ids du service et du métier, obligatoires à la création, 400 si introuvables).
+     * Champs modifiables : nom, prenom, email (optionnel), telephone (optionnel), dect (optionnel) ; serviceId et metierId (ids du service et du métier, obligatoires à la création, 400 si introuvables).
      * ROLE_ADMIN requis (JWT). 201 avec la ressource créée ; 400 si JSON/types invalides, 422 si validation échoue.
      * Enregistre une trace « Création … » dans la même transaction.
      */
@@ -113,7 +113,7 @@ class PersonneController extends AbstractApiController
 
     /**
      * Met à jour la personne d'id donné avec le corps JSON (mise à jour partielle : seuls les champs envoyés changent, PUT et PATCH sont équivalents).
-     * Champs modifiables : nom, prenom, email, telephone ; serviceId et metierId.
+     * Champs modifiables : nom, prenom, email, telephone, dect ; serviceId et metierId.
      * ROLE_ADMIN requis (JWT). 200 avec la ressource modifiée ; 404 si introuvable ; 400 si JSON/types invalides ; 422 si validation échoue.
      * Enregistre une trace « Modification … » dans la même transaction.
      */

@@ -73,7 +73,8 @@ export const resources = {
       { key: 'service', label: 'Service', get: (r) => r.service?.libelle },
       { key: 'metier', label: 'Métier', get: (r) => r.metier?.libelle },
       { key: 'email', label: 'E-mail' },
-      { key: 'telephone', label: 'Téléphone / DECT' },
+      { key: 'telephone', label: 'Téléphone' },
+      { key: 'dect', label: 'DECT' },
     ],
     // optional : champ facultatif (une valeur vide est envoyée comme null) ; type : type de l'<input>.
     fields: [
@@ -82,7 +83,8 @@ export const resources = {
       { key: 'serviceId', label: 'Service', options: 'services', optionLabel: 'libelle' },
       { key: 'metierId', label: 'Métier', options: 'metiers', optionLabel: 'libelle' },
       { key: 'email', label: 'E-mail', max: 100, type: 'email', optional: true },
-      { key: 'telephone', label: 'Téléphone / DECT', max: 50, optional: true },
+      { key: 'telephone', label: 'Téléphone', max: 50, optional: true },
+      { key: 'dect', label: 'DECT', max: 50, optional: true },
     ],
     toForm: (r) => ({
       nom: r.nom,
@@ -91,6 +93,7 @@ export const resources = {
       metierId: r.metier?.id,
       email: r.email,
       telephone: r.telephone,
+      dect: r.dect,
     }),
   },
   gardes: {

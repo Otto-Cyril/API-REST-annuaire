@@ -40,6 +40,31 @@ class PersonneCrudTest extends ApiTestCase
         $this->assertSame('Médecin', $data['metier']['libelle']);
     }
 
+    public function testCreationEtRechercheAvecDect(): void
+    {
+        $service = $this->createService();
+        $metier = $this->createMetier();
+
+        $data = $this->request('POST', '/api/personnes', [
+            'nom' => 'Lambert',
+            'prenom' => 'Julie',
+            'telephone' => '01 23 45 67 89',
+            'dect' => '4321',
+            'serviceId' => $service->getId(),
+            'metierId' => $metier->getId(),
+        ], admin: true);
+
+        $this->assertStatus(201);
+        $this->assertSame('4321', $data['dect']);
+
+        $trouves = $this->request('GET', '/api/personnes?q=4321');
+        $this->assertSame(['Lambert'], array_column($trouves, 'nom'));
+
+        $data = $this->request('PUT', '/api/personnes/'.$data['id'], ['dect' => null, 'serviceId' => $service->getId(), 'metierId' => $metier->getId()], admin: true);
+        $this->assertStatus(200);
+        $this->assertNull($data['dect']);
+    }
+
     public function testCreationAvecEmailEtTelephoneOptionnels(): void
     {
         $service = $this->createService();
@@ -55,6 +80,7 @@ class PersonneCrudTest extends ApiTestCase
         $this->assertStatus(201);
         $this->assertNull($data['email']);
         $this->assertNull($data['telephone']);
+        $this->assertNull($data['dect']);
         $traces = $this->request('GET', '/api/traces', admin: true);
         $this->assertSame('Création de la personne #'.$data['id'], $traces[0]['actionRealise']);
     }

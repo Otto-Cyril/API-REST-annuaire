@@ -49,6 +49,7 @@ class PersonneRepository extends ServiceEntityRepository
                 sprintf('LOWER(p.prenom) LIKE :q%d ESCAPE \'\\\'', $i),
                 sprintf('LOWER(p.email) LIKE :q%d ESCAPE \'\\\'', $i),
                 sprintf('LOWER(p.telephone) LIKE :q%d ESCAPE \'\\\'', $i),
+                sprintf('LOWER(p.dect) LIKE :q%d ESCAPE \'\\\'', $i),
                 sprintf('LOWER(s.libelle) LIKE :q%d ESCAPE \'\\\'', $i),
                 sprintf('LOWER(s.localisation) LIKE :q%d ESCAPE \'\\\'', $i),
                 sprintf('LOWER(m.libelle) LIKE :q%d ESCAPE \'\\\'', $i),

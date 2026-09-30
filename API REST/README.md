@@ -109,7 +109,7 @@ L'API répond alors sur `http://127.0.0.1:8000/api`.
 
 | Paramètre | Description |
 |---|---|
-| `q` | Mots recherchés (50 caractères max), insensible à la casse, dans le libellé du personnel, le service, sa localisation et le métier. Tous les mots doivent correspondre. |
+| `q` | Mots recherchés (50 caractères max), insensible à la casse, dans le libellé du personnel, le service, sa localisation et le métier (pour l'annuaire du personnel `/api/personnes` : nom, prénom, e-mail, téléphone, DECT, service, localisation et métier). Tous les mots doivent correspondre. |
 | `serviceId`, `metierId` | Filtres par identifiant |
 | `page` | Numéro de page (défaut 1) |
 | `limit` | Taille de page (défaut 20, max 100) |

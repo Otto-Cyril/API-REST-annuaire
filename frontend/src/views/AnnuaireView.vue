@@ -57,6 +57,7 @@ const fullName = (p) => `${p.prenom} ${p.nom}`
       </div>
       <div class="call-list">
         <CallNumber v-if="p.telephone" :numero="{ numero: p.telephone, type: 'Tél.' }" />
+        <CallNumber v-if="p.dect" :numero="{ numero: p.dect, type: 'DECT' }" />
         <a v-if="p.email" :href="`mailto:${p.email}`" class="mail-btn" :aria-label="`Écrire à ${fullName(p)}`">
           <Icon name="mail" /> {{ p.email }}
         </a>
