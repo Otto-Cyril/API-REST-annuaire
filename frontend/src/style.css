@@ -256,7 +256,24 @@ button.danger { color: var(--danger); }
 .tag-service { background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary); border-color: color-mix(in srgb, var(--primary) 35%, transparent); }
 :root[data-theme="dark"] .tag-service { color: var(--text); } /* le bleu clair du mode sombre sur son fond teinté ne fait que 3,9 */
 .tag-metier { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--text); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
-.tag-loc { font-size: .82rem; }.call-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-loc { font-size: .82rem; }
+.call-list { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Grand écran : une seule ligne par personne, colonnes alignées d'une carte à l'autre (nom, service, métier, lieu, numéros à droite) */
+@media (min-width: 1100px) {
+  /* Colonnes partagées (subgrid) : chacune prend la largeur de son contenu le plus long, les numéros récupèrent le reste */
+  .cards:has(> .card.person) { grid-template-columns: fit-content(15rem) fit-content(12rem) fit-content(12rem) fit-content(9rem) minmax(0, 1fr); column-gap: 14px; }
+  .card.person { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; gap: 0 14px; }
+  .card.person .person-body, .card.person .tags { display: contents; }
+  .card.person .card-title { grid-column: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card.person .tag-service { grid-column: 2; }
+  .card.person .tag-metier { grid-column: 3; }
+  .card.person .tag-loc { grid-column: 4; }
+  .card.person .tag { justify-self: start; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card.person .call-list { grid-column: 5; gap: 4px 8px; justify-content: flex-end; align-items: center; min-width: 0; }
+  .card.person .call-ico { display: none; } /* place gagnée : le libellé (DECT, Fixe…) suffit */
+  .card.person .call-btn { padding: 3px 8px; }
+  .card.person .mail-btn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+}
 .call-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 8px;
   background: var(--primary); color: var(--on-primary); text-decoration: none; font-size: .8rem;
