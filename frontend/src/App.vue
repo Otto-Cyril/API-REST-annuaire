@@ -64,7 +64,19 @@ watch(() => route.fullPath, () => {
 
 <template>
   <a href="#contenu" class="skip-link" @click.prevent="focusContent">Aller au contenu</a>
-  <div class="bg" aria-hidden="true"></div>
+  <div class="bg" aria-hidden="true">
+    <svg class="bg-decor" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" focusable="false">
+      <defs>
+        <radialGradient id="decor-a"><stop offset="0" style="stop-color: var(--accent); stop-opacity: .55" /><stop offset="1" style="stop-color: var(--accent); stop-opacity: 0" /></radialGradient>
+        <radialGradient id="decor-b"><stop offset="0" style="stop-color: var(--lavande); stop-opacity: .5" /><stop offset="1" style="stop-color: var(--lavande); stop-opacity: 0" /></radialGradient>
+      </defs>
+      <circle cx="1420" cy="110" r="460" fill="url(#decor-a)" />
+      <circle cx="90" cy="800" r="430" fill="url(#decor-b)" />
+      <path class="decor-wave-1" d="M0 640 C260 560 560 760 880 660 S1420 540 1600 620 V900 H0Z" />
+      <path class="decor-wave-2" d="M0 730 C330 670 690 830 1010 750 S1450 680 1600 740 V900 H0Z" />
+      <path class="decor-wave-3" d="M0 820 C380 780 720 890 1080 830 S1480 800 1600 830 V900 H0Z" />
+    </svg>
+  </div>
 
   <div class="shell" :class="{ open }">
     <aside id="menu" class="sidebar" aria-label="Navigation principale">

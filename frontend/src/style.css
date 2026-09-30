@@ -3,13 +3,13 @@
   --bg: #f3f5f8;
   --surface: #fff;
   --glass: rgba(255, 255, 255, .78);
-  --veil: rgba(243, 245, 248, .80);
   --text: #1a2233;
   --muted: #5b6577;
   --border: #d2d8de;
   --primary: #003681;
   --on-primary: #fff;
   --accent: #60b4dc;
+  --lavande: #82a0d3;
   --side: #003681;
   --glow: rgba(96, 180, 220, .35);
   --danger: #c0392b;
@@ -21,7 +21,6 @@
   --bg: #222f4a;
   --surface: #2e3d5e;
   --glass: rgba(46, 61, 94, .72);
-  --veil: rgba(34, 47, 74, .72);
   --text: #f1f4f9;
   --muted: #bcc7da;
   --border: #4d6187;
@@ -42,17 +41,12 @@ h2 { font-size: 1.15rem; }
 .error { color: var(--danger); }
 .container { max-width: 1280px; margin: 0 auto; padding: 0 20px 48px; }
 
-/* ---------- Fond : dépose une photo dans frontend/public/backgrounds/fond.jpg ---------- */
-.bg {
-  position: fixed; inset: 0; z-index: -1;
-  background:
-    linear-gradient(var(--veil), var(--veil)),
-    url('/backgrounds/fond.jpg') center / cover no-repeat,
-    radial-gradient(60% 50% at 85% 10%, rgba(96, 180, 220, .35), transparent 70%),
-    radial-gradient(55% 55% at 10% 90%, rgba(130, 160, 211, .35), transparent 70%),
-    radial-gradient(40% 40% at 60% 60%, rgba(64, 49, 113, .18), transparent 70%),
-    var(--bg);
-}
+/* ---------- Fond : décor vectoriel (formes douces aux couleurs de la charte), net à toute taille ---------- */
+.bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); }
+.bg-decor { display: block; width: 100%; height: 100%; }
+.decor-wave-1 { fill: var(--primary); opacity: .14; }
+.decor-wave-2 { fill: var(--accent); opacity: .30; }
+.decor-wave-3 { fill: var(--lavande); opacity: .38; }
 
 /* ---------- Dashboard : barre latérale + contenu ---------- */
 .shell { display: grid; grid-template-columns: 224px minmax(0, 1fr); min-height: 100vh; }
