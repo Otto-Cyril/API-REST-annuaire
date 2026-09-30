@@ -2,6 +2,7 @@
 
 namespace App\Tests\Api;
 
+use App\Entity\Garde;
 use App\Entity\Metier;
 use App\Entity\NumeroGarde;
 use App\Entity\PersonnelDeGarde;
@@ -28,7 +29,7 @@ abstract class ApiTestCase extends WebTestCase
 
         // Ordre : les tables enfants d'abord (clés étrangères).
         $connection = $this->em->getConnection();
-        foreach (['numero_garde', 'personnel_de_garde', 'personne', 'service', 'metier', 'numero_urgence', 'trace'] as $table) {
+        foreach (['garde', 'numero_garde', 'personnel_de_garde', 'personne', 'service', 'metier', 'numero_urgence', 'trace'] as $table) {
             $connection->executeStatement('DELETE FROM '.$table);
         }
     }
@@ -102,6 +103,18 @@ abstract class ApiTestCase extends WebTestCase
         $this->em->flush();
 
         return $numeroGarde;
+    }
+
+    protected function createGarde(PersonnelDeGarde $personnel, string $debut = 'today', ?string $fin = null): Garde
+    {
+        $garde = (new Garde())
+            ->setPersonnelDeGarde($personnel)
+            ->setDateDebut(new \DateTimeImmutable($debut))
+            ->setDateFin(new \DateTimeImmutable($fin ?? $debut));
+        $this->em->persist($garde);
+        $this->em->flush();
+
+        return $garde;
     }
 
     protected function countTraces(): int

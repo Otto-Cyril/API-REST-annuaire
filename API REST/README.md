@@ -95,12 +95,13 @@ L'API répond alors sur `http://127.0.0.1:8000/api`.
 | Numéros d'urgence (`libelle`, `numero`) | `/api/numeros-urgence` (mêmes 5 routes) |
 | Personnel de garde (`libelle`, `serviceId`, `metierId`) | `/api/personnel` (mêmes 5 routes) |
 | Numéros de garde (`numero`, `type`, `personnelDeGardeId`) | `/api/numeros-garde` (mêmes 5 routes) |
+| Gardes (`personnelDeGardeId`, `dateDebut`, `dateFin` en `AAAA-MM-JJ`, bornes incluses) | `/api/gardes` (mêmes 5 routes) ; `GET /api/gardes?date=AAAA-MM-JJ` ne renvoie que les gardes couvrant ce jour (la « garde en cours » de l'interface) |
 | Traces (journal d'audit, lecture seule) | `GET /api/traces`, `GET /api/traces/{id}` |
 | Connexion | `POST /api/login` |
 
 - `PUT` et `PATCH` sont équivalents : seuls les champs envoyés sont modifiés.
 - Les relations se donnent par identifiant (`serviceId`, `metierId`, `personnelDeGardeId`) ; un id inconnu renvoie 400.
-- Supprimer un service ou un métier encore utilisé renvoie 409. Supprimer un personnel supprime ses numéros de garde.
+- Supprimer un service ou un métier encore utilisé renvoie 409. Supprimer un personnel supprime ses numéros de garde et ses gardes.
 - Le détail de chaque route (accès, champs, codes de retour) est dans le commentaire au-dessus de la route,
   dans `src/Controller/Api/`.
 
