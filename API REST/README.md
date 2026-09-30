@@ -115,7 +115,7 @@ L'API répond alors sur `http://127.0.0.1:8000/api`.
 | `limit` | Taille de page (défaut 20, max 100) |
 
 La pagination est renvoyée dans les en-têtes `X-Total-Count`, `X-Page`, `X-Per-Page`, `X-Total-Pages`.
-`GET /api/traces` est paginé de la même façon (défaut 50, max 200), du plus récent au plus ancien.
+`GET /api/traces` est paginé de la même façon (défaut 50, max 200), du plus récent au plus ancien. Filtres facultatifs : `username` (contient, insensible à la casse), `action` (`Création`, `Modification` ou `Suppression`), `from` et `to` (`AAAA-MM-JJ`, bornes incluses) ; `400` si une valeur est invalide.
 
 ### Format des erreurs
 

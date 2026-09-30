@@ -34,6 +34,34 @@ class TraceTest extends ApiTestCase
         $this->assertSame(['Action 1'], array_column($data, 'actionRealise'));
     }
 
+    private function trace(string $username, string $date, string $action): void
+    {
+        $this->em->persist((new Trace())->setUsername($username)->setDateAction(new \DateTimeImmutable($date))->setActionRealise($action));
+        $this->em->flush();
+    }
+
+    public function testFiltresUtilisateurActionEtPeriode(): void
+    {
+        $this->trace('alice', '2026-03-01 10:00:00', 'Création du service #1');
+        $this->trace('Bob', '2026-03-02 23:59:59', 'Modification du service #1');
+        $this->trace('alice', '2026-03-03 08:00:00', 'Suppression du service #1');
+        $actions = fn (string $query): array => array_column($this->request('GET', '/api/traces'.$query, admin: true), 'actionRealise');
+
+        $this->assertSame(['Suppression du service #1', 'Création du service #1'], $actions('?username=ALI'));
+        $this->assertSame(['Modification du service #1'], $actions('?action=Modification'));
+        $this->assertSame(['Modification du service #1', 'Création du service #1'], $actions('?from=2026-03-01&to=2026-03-02'));
+        $this->assertSame(['Suppression du service #1'], $actions('?username=alice&action=Suppression&from=2026-03-03'));
+        $this->assertSame([], $actions('?username=%25'));
+    }
+
+    public function testFiltresInvalides(): void
+    {
+        foreach (['?action=Autre', '?from=2026-13-01', '?to=hier', '?username='.str_repeat('a', 51)] as $query) {
+            $this->request('GET', '/api/traces'.$query, admin: true);
+            $this->assertStatus(400);
+        }
+    }
+
     public function testLimiteParDefautEtMaximum(): void
     {
         $this->request('GET', '/api/traces', admin: true);
