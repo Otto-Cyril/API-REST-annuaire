@@ -369,6 +369,9 @@ button.stat:hover, button.stat.active { border-color: var(--accent); box-shadow:
 /* Fiche */
 .fiche-head { display: flex; align-items: center; gap: 16px; padding-top: 16px; }
 .fiche-head h1 { margin: 0 0 6px; }
+.fiche-loc { margin: 6px 0 0; font-size: .9rem; }
+.fiche-edit { margin-left: auto; align-self: flex-start; }
+.fiche-section { margin: 20px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); }
 .avatar-lg { width: 64px; height: 64px; font-size: 1.3rem; flex: none; }
 .call-item.large .call-btn { padding: 8px 14px; font-size: .95rem; }
 .call-item.large .call-btn b { font-size: 1.05rem; }

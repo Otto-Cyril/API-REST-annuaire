@@ -4,6 +4,7 @@ import { get } from '../api'
 import CallNumber from '../components/CallNumber.vue'
 import Icon from '../components/Icon.vue'
 import { pageTitle } from '../router'
+import { sortNumbers } from '../garde'
 import { useAuth } from '../stores/auth'
 
 const props = defineProps({ id: String })
@@ -37,27 +38,20 @@ watchEffect(async () => {
           <span class="tag tag-service">{{ p.service.libelle }}</span>
           <span class="tag tag-metier">{{ p.metier.libelle }}</span>
         </div>
+        <p v-if="p.service.localisation" class="fiche-loc muted">{{ p.service.localisation }}</p>
       </div>
-    </header>
-    <dl>
-      <dt>Service</dt>
-      <dd>{{ p.service.libelle }}</dd>
-      <dt>Localisation</dt>
-      <dd>{{ p.service.localisation }}</dd>
-      <dt>Métier</dt>
-      <dd>{{ p.metier.libelle }}</dd>
-    </dl>
-    <h2>Numéros de garde</h2>
-    <p v-if="!p.numerosGarde.length" class="muted">Aucun numéro.</p>
-    <div class="call-list">
-      <CallNumber v-for="n in p.numerosGarde" :key="n.id" :numero="n" large />
       <RouterLink
         v-if="auth.isAdmin"
         :to="{ name: 'personnel-edit', params: { id: p.id } }"
-        class="edit-btn edit-btn-lg"
+        class="edit-btn edit-btn-lg fiche-edit"
         :aria-label="`Modifier la fiche de ${p.libelle}`"
         title="Modifier la fiche"
       ><Icon name="edit" /> Modifier</RouterLink>
+    </header>
+    <h2 class="fiche-section">Numéros de garde</h2>
+    <p v-if="!p.numerosGarde.length" class="muted">Aucun numéro.</p>
+    <div class="call-list">
+      <CallNumber v-for="n in sortNumbers(p.numerosGarde)" :key="n.id" :numero="n" large />
     </div>
   </article>
   <article v-else class="fiche skeleton" aria-busy="true" aria-label="Chargement">
