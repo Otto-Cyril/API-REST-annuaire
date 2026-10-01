@@ -64,6 +64,16 @@ Docker Compose ne lit pas `.env.local` tout seul : d'où l'option `--env-file .e
 
 Le mot de passe `sa` n'est pris en compte qu'à la **première** création du volume `database_data`. Si le volume existe déjà avec un autre mot de passe, il faut le supprimer (`docker compose down -v`, **efface les données**) ou utiliser l'ancien mot de passe.
 
+#### Utilisateur applicatif dédié (optionnel)
+
+Par défaut l'API se connecte avec `sa`. Pour utiliser un login dédié (`app`, rôle `db_owner`), exécuter `docker/mssql/init.sql`. Il crée la base et le login, et prend ses valeurs en variables `sqlcmd` (`DB_NAME`, `APP_PASSWORD`) :
+
+```bash
+docker compose --env-file .env.local exec database /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -v DB_NAME=ANNUAIRE_IMM_DEV APP_PASSWORD="<mot_de_passe_app>" -i /docker/init.sql
+```
+
+Puis adapter `DATABASE_URL` dans `.env.local` : `pdo-sqlsrv://app:<mot_de_passe_app>@127.0.0.1:1433/ANNUAIRE_IMM_DEV?charset=utf8&TrustServerCertificate=true`.
+
 ### 4. Lancer l'API
 
 ```bash
