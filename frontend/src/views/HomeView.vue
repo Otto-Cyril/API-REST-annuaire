@@ -35,11 +35,6 @@ onMounted(async () => {
     <div class="stat"><b>{{ services.length }}</b><span>Services</span></div>
   </section>
 
-  <div v-if="!hasFilters && services.length" class="active-filters" aria-label="Raccourcis par service">
-    <span class="muted">Raccourcis :</span>
-    <button v-for="s in services" :key="s.id" type="button" class="filter-pill" @click="filters.serviceId = String(s.id)">{{ s.libelle }}</button>
-  </div>
-
   <DirectoryFilters
     :filters="filters"
     :services="services"
