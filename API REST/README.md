@@ -101,7 +101,7 @@ L'API répond alors sur `http://127.0.0.1:8000/api`.
 
 | Ressource | Routes |
 |---|---|
-| Numéros d'urgence (`libelle`, `numero`) | `/api/numeros-urgence` (mêmes 5 routes) |
+| Numéros d'urgence (`libelle`, `numero`, `icone` facultatif : phone, plus, flame, shield, trash, user, heart, stethoscope, alert, bed, pill, drop, building, wrench, ambulance, computer, virus, baby ; vide = déduit du libellé) | `/api/numeros-urgence` (mêmes 5 routes) |
 | Personnel de garde (`username` = identifiant AD ; libellé, service et métier lus dans l'AD) | `GET /api/personnel`, `GET /api/personnel/{id}`, `POST /api/personnel`, `PUT\|PATCH /api/personnel/{id}`, `DELETE /api/personnel/{id}` ; `GET /api/personnel/services` et `/metiers` listent les valeurs en usage, pour les filtres |
 | Annuaire du personnel, **lu dans l'AD, lecture seule** | `GET /api/personnes` (recherche, voir plus bas), `GET /api/personnes/services`, `GET /api/personnes/metiers`, `GET /api/personnes/{identifiant AD}`, `GET /api/personnes/{identifiant AD}/photo` |
 | Numéros de garde (`numero`, `type`, `personnelDeGardeId`) | `/api/numeros-garde` (mêmes 5 routes) |

@@ -14,7 +14,17 @@ describe('urgenceIcon', () => {
     ['Perfusionniste', 'heart'],
     ['Chirurgien urologie', 'stethoscope'],
     ['Gastro-entérologue', 'stethoscope'],
-    ['Infectiologue référent covid', 'stethoscope'],
+    ['Infectiologue référent covid', 'virus'],
+    ['Pompier', 'flame'],
+    ['SAMU', 'ambulance'],
+    ['Police municipale', 'shield'],
+    ['Pharmacie de garde', 'pill'],
+    ['Laboratoire de biologie', 'drop'],
+    ['Maintenance technique', 'wrench'],
+    ['Support informatique', 'computer'],
+    ['Maternité', 'baby'],
+    ['Bureau des admissions', 'bed'],
+    ['Pneumologue', 'stethoscope'],
   ])('%s -> %s', (libelle, icon) => {
     expect(urgenceIcon(libelle)).toBe(icon)
   })
@@ -24,5 +34,15 @@ describe('urgenceIcon', () => {
     expect(urgenceIcon("L'AMP")).toBe('phone')
     expect(urgenceIcon('')).toBe('phone')
     expect(urgenceIcon(undefined)).toBe('phone')
+  })
+})
+
+describe('iconOf', () => {
+  it("préfère l'icône choisie, sinon déduit du libellé", async () => {
+    const { iconOf, URGENCE_ICONS } = await import('./urgence')
+    expect(iconOf({ libelle: 'Standard', icone: 'bed' })).toBe('bed')
+    expect(iconOf({ libelle: 'Incendie', icone: null })).toBe('flame')
+    expect(iconOf({ libelle: 'Standard' })).toBe('phone')
+    expect(new Set(URGENCE_ICONS.map((i) => i.value)).size).toBe(URGENCE_ICONS.length)
   })
 })

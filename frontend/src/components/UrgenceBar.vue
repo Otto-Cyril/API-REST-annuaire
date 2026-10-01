@@ -6,7 +6,7 @@ import { useAuth } from '../stores/auth'
 import Icon from './Icon.vue'
 import { frDate, today, relativeDay, peopleOnDuty, groupByService } from '../garde'
 import AdPicker from './AdPicker.vue'
-import { urgenceIcon } from '../urgence'
+import { iconOf, URGENCE_ICONS } from '../urgence'
 
 const auth = useAuth()
 const router = useRouter()
@@ -24,7 +24,7 @@ const vital = computed(() => numeros.value[0])
 // Gestion des numéros d'urgence (admin connecté)
 const managing = ref(false)
 const editing = ref(null) // null = formulaire fermé, 0 = création, sinon id
-const form = reactive({ libelle: '', numero: '' })
+const form = reactive({ libelle: '', numero: '', icone: '' })
 const formError = ref('')
 const saving = ref(false)
 
@@ -123,6 +123,7 @@ function toggleManaging() {
 function edit(n) {
   form.libelle = n?.libelle ?? ''
   form.numero = n?.numero ?? ''
+  form.icone = n?.icone ?? ''
   editing.value = n ? n.id : 0
   formError.value = ''
 }
@@ -140,7 +141,7 @@ function describe(e) {
 async function save() {
   saving.value = true
   formError.value = ''
-  const body = { libelle: form.libelle.trim(), numero: form.numero.trim() }
+  const body = { libelle: form.libelle.trim(), numero: form.numero.trim(), icone: form.icone || null }
   try {
     if (editing.value === 0) await post('/numeros-urgence', body)
     else await put(`/numeros-urgence/${editing.value}`, body)
@@ -234,7 +235,7 @@ onBeforeUnmount(() => clearInterval(timer))
         <ul v-else class="urgence-list">
           <li v-for="(n, i) in numeros" :key="n.id" :class="{ managed: managing }" :style="{ '--i': Math.min(i, 12) }">
             <a :href="tel(n.numero)" class="urgence-num">
-              <span class="urgence-ico"><Icon :name="urgenceIcon(n.libelle)" /></span>
+              <span class="urgence-ico"><Icon :name="iconOf(n)" /></span>
               <span class="urgence-label">{{ n.libelle }}</span>
               <b>{{ n.numero }}</b>
             </a>
@@ -250,6 +251,13 @@ onBeforeUnmount(() => clearInterval(timer))
             <strong>{{ editing === 0 ? 'Nouveau numéro' : 'Modifier le numéro' }}</strong>
             <input v-model="form.libelle" maxlength="50" placeholder="Libellé" aria-label="Libellé" required />
             <input v-model="form.numero" maxlength="50" placeholder="Numéro" aria-label="Numéro" required inputmode="tel" />
+            <label class="urgence-icone">
+              <span class="urgence-icone-preview" aria-hidden="true"><Icon :name="iconOf({ libelle: form.libelle, icone: form.icone })" /></span>
+              <select v-model="form.icone" aria-label="Icône">
+                <option value="">Automatique (selon le libellé)</option>
+                <option v-for="i in URGENCE_ICONS" :key="i.value" :value="i.value">{{ i.label }}</option>
+              </select>
+            </label>
             <div class="actions">
               <button class="primary" :disabled="saving">{{ saving ? '…' : 'Enregistrer' }}</button>
               <button type="button" @click="cancel">Annuler</button>

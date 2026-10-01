@@ -564,3 +564,6 @@ td.actions button { padding: 4px 12px; font-size: .85rem; } /* boutons de ligne 
 /* Barres de défilement masquées : le défilement (molette, tactile, clavier) reste actif */
 * { scrollbar-width: none; }
 *::-webkit-scrollbar { display: none; }
+.urgence-icone { display: flex; align-items: center; gap: 8px; }
+.urgence-icone select { flex: 1; min-width: 0; }
+.urgence-icone-preview { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 8px; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); font-size: 1.1rem; }

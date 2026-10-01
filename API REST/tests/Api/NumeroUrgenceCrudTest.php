@@ -23,7 +23,7 @@ class NumeroUrgenceCrudTest extends ApiTestCase
         $data = $this->request('GET', '/api/numeros-urgence/'.$n->getId());
 
         $this->assertStatus(200);
-        $this->assertSame(['id' => $n->getId(), 'libelle' => 'SAMU', 'numero' => '15'], $data);
+        $this->assertSame(['id' => $n->getId(), 'libelle' => 'SAMU', 'numero' => '15', 'icone' => null], $data);
     }
 
     public function testCreationEtTrace(): void
@@ -41,6 +41,21 @@ class NumeroUrgenceCrudTest extends ApiTestCase
 
         $this->assertStatus(422);
         $this->assertArrayHasKey('numero', $data['errors']);
+    }
+
+    public function testChoixDeLIcone(): void
+    {
+        $data = $this->request('POST', '/api/numeros-urgence', ['libelle' => 'Standard', 'numero' => '9', 'icone' => 'bed'], admin: true);
+        $this->assertStatus(201);
+        $this->assertSame('bed', $data['icone']);
+
+        $data = $this->request('PATCH', '/api/numeros-urgence/'.$data['id'], ['icone' => ''], admin: true); // vide = automatique
+        $this->assertStatus(200);
+        $this->assertNull($data['icone']);
+
+        $data = $this->request('POST', '/api/numeros-urgence', ['libelle' => 'X', 'numero' => '1', 'icone' => 'inconnue'], admin: true);
+        $this->assertStatus(422);
+        $this->assertArrayHasKey('icone', $data['errors']);
     }
 
     public function testModificationEtSuppression(): void
