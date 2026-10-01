@@ -5,7 +5,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       # Politique SQL Server : 8+ caractères avec majuscules, minuscules, chiffres ou symboles
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-!ChangeMe!Sa1}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?définir MSSQL_SA_PASSWORD dans .env.local (docker compose --env-file .env.local ...)}
       MSSQL_PID: Developer
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
