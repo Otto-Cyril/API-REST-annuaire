@@ -13,9 +13,9 @@ class PersonneAnnuaireTest extends ApiTestCase
     {
         parent::setUp();
 
-        FakeDirectoryLookup::add('jdupont', 'Jean', 'Dupont', 'jean.dupont@imm.fr', 'Cardiologie', 'Médecin', [['numero' => '4412', 'type' => 'Tél.'], ['numero' => '+33140000000', 'type' => 'IP']]);
+        FakeDirectoryLookup::add('jdupont', 'Jean', 'Dupont', 'jean.dupont@imm.fr', 'Cardiologie', 'Médecin', [['numero' => '4412', 'type' => 'Tél.'], ['numero' => '+33140000000', 'type' => 'IP']], matricule: 'M0042', manager: 'mclaire', reports: ['lgarcia', 'horsannuaire']);
         FakeDirectoryLookup::add('mclaire', 'Claire', 'Martin', null, 'Urgences', 'Infirmier');
-        FakeDirectoryLookup::add('lgarcia', 'Léa', 'Garcia', 'lea.garcia@imm.fr', 'Cardiologie', 'Infirmier');
+        FakeDirectoryLookup::add('lgarcia', 'Léa', 'Garcia', 'lea.garcia@imm.fr', 'Cardiologie', 'Infirmier', matricule: 'M0043');
         FakeDirectoryLookup::add('sansservice', 'Zoé', 'Zorro');
     }
 
@@ -43,7 +43,40 @@ class PersonneAnnuaireTest extends ApiTestCase
             'service' => ['id' => 'Cardiologie', 'libelle' => 'Cardiologie'],
             'metier' => ['id' => 'Médecin', 'libelle' => 'Médecin'],
             'numeros' => [['numero' => '4412', 'type' => 'Tél.'], ['numero' => '+33140000000', 'type' => 'IP']],
+            'responsable' => ['username' => 'mclaire', 'nom' => 'Claire Martin'],
+            'equipe' => [['username' => 'lgarcia', 'nom' => 'Léa Garcia']], // le compte hors annuaire est ignoré
         ], $data);
+    }
+
+    public function testLeMatriculeEstReserveAuxAdministrateurs(): void
+    {
+        $this->assertArrayNotHasKey('matricule', $this->request('GET', '/api/personnes/jdupont'));
+
+        $data = $this->request('GET', '/api/personnes/jdupont', admin: true);
+        $this->assertSame('M0042', $data['matricule']);
+
+        $this->assertArrayNotHasKey('matricule', $this->request('GET', '/api/personnes')[0]); // jamais dans la liste
+        $this->assertArrayNotHasKey('responsable', $this->request('GET', '/api/personnes')[0]);
+    }
+
+    public function testPhotoServieALaDemande(): void
+    {
+        FakeDirectoryLookup::photoOf('jdupont', "\xFF\xD8\xFF\xE0photo");
+
+        $this->client->request('GET', '/api/personnes/jdupont/photo');
+
+        $this->assertStatus(200);
+        $this->assertSame("\xFF\xD8\xFF\xE0photo", $this->client->getResponse()->getContent());
+        $this->assertStringStartsWith('image/', $this->client->getResponse()->headers->get('Content-Type'));
+    }
+
+    public function testPhotoAbsenteOuPersonneInconnue(): void
+    {
+        $this->request('GET', '/api/personnes/jdupont/photo'); // aucune photo
+        $this->assertStatus(404);
+
+        $this->request('GET', '/api/personnes/inconnu/photo');
+        $this->assertStatus(404);
     }
 
     public function testPersonneSansServiceNiPoste(): void

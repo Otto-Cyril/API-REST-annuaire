@@ -17,4 +17,9 @@ interface DirectoryLookupInterface
      * @return list<DirectoryEntry>
      */
     public function all(): array;
+
+    /**
+     * Photo (thumbnailPhoto, octets bruts) du compte, ou null s'il n'en a pas. Lève une 503 si l'annuaire est injoignable.
+     */
+    public function photo(string $username): ?string;
 }

@@ -82,12 +82,13 @@ class DirectoryLookupTest extends TestCase
         $this->assertNull($this->lookup()->find('inconnu'));
     }
 
-    public function testTousLesNumerosSontRecuperesQuelQueSoitLeType(): void
+    public function testNumerosProfessionnelsSeulement(): void
     {
         $this->ldapReturns($this->ldap, [new Entry('CN=Jean,DC=immdom,DC=local', [
             'sAMAccountName' => ['jdupont'],
-            'telephoneNumber' => ['4412,4413; 4412'],            // plusieurs numéros dans une valeur, doublon écarté
-            'mobile' => ['06 12 34 56 78'],
+            'telephoneNumber' => ['4412,4413; 4412, 06 98 76 54 32'], // plusieurs numéros dans une valeur, doublon écarté, mobile saisi ici écarté
+            'otherTelephone' => ['+33 7 12 34 56 78', '01 23 45 67 89'], // mobile en +33 écarté, fixe en 01 conservé
+            'mobile' => ['06 12 34 56 78'],                      // numéro personnel : jamais lu
             'ipPhone' => ['+33140000000'],
             'pager' => ['777'],
             'homePhone' => ['01 02 03 04 05'],                   // numéro personnel : jamais lu
@@ -98,10 +99,61 @@ class DirectoryLookupTest extends TestCase
         $this->assertSame([
             ['numero' => '4412', 'type' => 'Tél.'],
             ['numero' => '4413', 'type' => 'Tél.'],
-            ['numero' => '06 12 34 56 78', 'type' => 'Mobile'],
+            ['numero' => '01 23 45 67 89', 'type' => 'Tél.'],
             ['numero' => '+33140000000', 'type' => 'IP'],
             ['numero' => '777', 'type' => 'Bip'],
         ], $numbers);
+    }
+
+    public function testLesChampsMobilesNeSontPasDemandesALAD(): void
+    {
+        $captured = null;
+        $collection = $this->createStub(CollectionInterface::class);
+        $collection->method('getIterator')->willReturn(new \ArrayIterator([]));
+        $query = $this->createStub(QueryInterface::class);
+        $query->method('execute')->willReturn($collection);
+        $ldap = $this->createStub(LdapInterface::class);
+        $ldap->method('escape')->willReturnArgument(0);
+        $ldap->method('query')->willReturnCallback(function (string $base, string $filter, array $options) use (&$captured, $query) {
+            $captured = $options['filter'];
+
+            return $query;
+        });
+
+        $this->lookup($ldap)->find('jdupont');
+
+        $this->assertNotContains('mobile', $captured);
+        $this->assertNotContains('othermobile', $captured);
+        $this->assertNotContains('homephone', $captured);
+        $this->assertNotContains('thumbnailphoto', $captured); // la photo est lue à la demande
+    }
+
+    public function testResponsableEquipeEtMatricule(): void
+    {
+        $this->ldapReturns($this->ldap, [new Entry('CN=Jean Dupont,OU=Users,DC=immdom,DC=local', [
+            'sAMAccountName' => ['jdupont'],
+            'employeeID' => ['M0042'],
+            'manager' => ['CN=Anne Martin,OU=Users,DC=immdom,DC=local'],
+            'directReports' => ['CN=Luc Petit,OU=Users,DC=immdom,DC=local', ' CN=Zoé Roux,OU=Users,DC=immdom,DC=local '],
+        ])]);
+
+        $account = $this->lookup()->find('jdupont');
+
+        $this->assertSame('CN=Jean Dupont,OU=Users,DC=immdom,DC=local', $account->dn);
+        $this->assertSame('M0042', $account->matricule);
+        $this->assertSame('CN=Anne Martin,OU=Users,DC=immdom,DC=local', $account->managerDn);
+        $this->assertSame(['CN=Luc Petit,OU=Users,DC=immdom,DC=local', 'CN=Zoé Roux,OU=Users,DC=immdom,DC=local'], $account->reportDns);
+    }
+
+    public function testPhoto(): void
+    {
+        $this->ldapReturns($this->ldap, [new Entry('CN=Jean,DC=immdom,DC=local', ['sAMAccountName' => ['jdupont'], 'thumbnailPhoto' => ["\xFF\xD8\xFFphoto"]])]);
+        $this->assertSame("\xFF\xD8\xFFphoto", $this->lookup()->photo('jdupont'));
+
+        $ldap = $this->createStub(LdapInterface::class);
+        $ldap->method('escape')->willReturnArgument(0);
+        $this->ldapReturns($ldap, [new Entry('CN=Sans,DC=immdom,DC=local', ['sAMAccountName' => ['sans']])]);
+        $this->assertNull($this->lookup($ldap)->photo('sans'));
     }
 
     public function testAllLitLUniteDOrganisationDeLAnnuaireEtIgnoreLesComptesSansIdentifiant(): void

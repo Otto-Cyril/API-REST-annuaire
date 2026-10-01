@@ -8,7 +8,8 @@ namespace App\Ldap;
 final class DirectoryEntry
 {
     /**
-     * @param list<array{numero: string, type: string}> $numbers tous les numéros du compte, quel que soit leur type
+     * @param list<array{numero: string, type: string}> $numbers  numéros professionnels du compte (les mobiles ne sont pas lus)
+     * @param list<string>                              $reportDns DN des personnes rattachées à ce compte (directReports)
      */
     public function __construct(
         public readonly string $username,
@@ -19,6 +20,10 @@ final class DirectoryEntry
         public readonly ?string $department = null,
         public readonly ?string $title = null,
         public readonly array $numbers = [],
+        public readonly ?string $dn = null,
+        public readonly ?string $matricule = null,
+        public readonly ?string $managerDn = null,
+        public readonly array $reportDns = [],
     ) {
     }
 
@@ -45,6 +50,6 @@ final class DirectoryEntry
      */
     public static function fromArray(array $data): self
     {
-        return new self($data['username'], $data['prenom'], $data['nom'], $data['displayName'], $data['email'], $data['department'] ?? null, $data['title'] ?? null, $data['numbers'] ?? []);
+        return new self($data['username'], $data['prenom'], $data['nom'], $data['displayName'], $data['email'], $data['department'] ?? null, $data['title'] ?? null, $data['numbers'] ?? [], $data['dn'] ?? null, $data['matricule'] ?? null, $data['managerDn'] ?? null, $data['reportDns'] ?? []);
     }
 }

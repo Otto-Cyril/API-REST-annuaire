@@ -12,14 +12,12 @@ use Symfony\Component\Ldap\LdapInterface;
  */
 class DirectoryLookup implements DirectoryLookupInterface
 {
-    private const ATTRIBUTES = ['samaccountname', 'givenname', 'sn', 'displayname', 'mail', 'department', 'title'];
+    private const ATTRIBUTES = ['samaccountname', 'givenname', 'sn', 'displayname', 'mail', 'department', 'title', 'employeeid', 'manager', 'directreports'];
 
-    // Tous les numéros du compte, quel que soit leur type. homePhone (numéro personnel) n'est volontairement pas lu.
+    // Numéros professionnels du compte. homePhone, mobile et otherMobile (numéros personnels) ne sont volontairement pas lus.
     private const NUMBER_ATTRIBUTES = [
         'telephonenumber' => 'Tél.',
         'othertelephone' => 'Tél.',
-        'mobile' => 'Mobile',
-        'othermobile' => 'Mobile',
         'ipphone' => 'IP',
         'otheripphone' => 'IP',
         'pager' => 'Bip',
@@ -50,6 +48,19 @@ class DirectoryLookup implements DirectoryLookupInterface
         return [] === $results ? null : $this->toEntry($results[0], $username);
     }
 
+    public function photo(string $username): ?string
+    {
+        $results = $this->query($this->baseDn, function () use ($username) {
+            $escaped = $this->ldap->escape($username, '', LdapInterface::ESCAPE_FILTER);
+
+            return str_replace('{username}', $escaped, $this->userQuery);
+        }, [], ['thumbnailphoto']);
+
+        $photo = [] === $results ? null : ($results[0]->getAttribute('thumbnailPhoto', false)[0] ?? null);
+
+        return null === $photo || '' === $photo ? null : (string) $photo;
+    }
+
     public function all(): array
     {
         // Comptes utilisateurs actifs (bit 2 d'userAccountControl = compte désactivé).
@@ -72,10 +83,11 @@ class DirectoryLookup implements DirectoryLookupInterface
     /**
      * @param callable(): string   $filter construit le filtre (l'échappement LDAP peut lever une erreur)
      * @param array<string, mixed> $options
+     * @param list<string>|null    $attributes attributs à lire (par défaut : ceux de la fiche)
      *
      * @return list<Entry>
      */
-    private function query(string $dn, callable $filter, array $options = []): array
+    private function query(string $dn, callable $filter, array $options = [], ?array $attributes = null): array
     {
         try {
             // Un seul bind par instance : la commande de synchronisation interroge de nombreux comptes.
@@ -84,7 +96,7 @@ class DirectoryLookup implements DirectoryLookupInterface
                 $this->bound = true;
             }
 
-            $attributes = [...self::ATTRIBUTES, ...array_keys(self::NUMBER_ATTRIBUTES)];
+            $attributes ??= [...self::ATTRIBUTES, ...array_keys(self::NUMBER_ATTRIBUTES)];
 
             return iterator_to_array($this->ldap->query($dn, $filter(), ['filter' => $attributes] + $options)->execute(), false);
         } catch (LdapExceptionInterface $e) {
@@ -105,6 +117,10 @@ class DirectoryLookup implements DirectoryLookupInterface
             self::attribute($entry, 'department'),
             self::attribute($entry, 'title'),
             self::numbers($entry),
+            $entry->getDn(),
+            self::attribute($entry, 'employeeID'),
+            self::attribute($entry, 'manager'),
+            array_values(array_filter(array_map(static fn ($dn) => trim((string) $dn), $entry->getAttribute('directReports', false) ?? []), static fn (string $dn) => '' !== $dn)),
         );
     }
 
@@ -120,7 +136,8 @@ class DirectoryLookup implements DirectoryLookupInterface
                 foreach (preg_split('/[,;]/', (string) $value) ?: [] as $number) {
                     $number = trim($number);
                     $key = preg_replace('/[\s.\-()]/', '', $number);
-                    if ('' !== $number && !isset($numbers[$key])) {
+                    // Un mobile saisi dans un autre champ (06, 07, +33 6/7) reste un numéro personnel : écarté.
+                    if ('' !== $number && !preg_match('/^(\+?33|0033|0)[67]\d{8}$/', $key) && !isset($numbers[$key])) {
                         $numbers[$key] = ['numero' => $number, 'type' => $type];
                     }
                 }

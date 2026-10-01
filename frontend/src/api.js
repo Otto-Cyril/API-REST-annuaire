@@ -2,6 +2,9 @@ import { useAuth } from './stores/auth'
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
+// URL absolue d'une route de l'API, pour une ressource chargée par le navigateur (ex. <img src>).
+export const apiUrl = (path) => BASE + path
+
 export class ApiError extends Error {
   constructor(status, message, errors = null) {
     super(message)

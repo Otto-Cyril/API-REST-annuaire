@@ -375,6 +375,7 @@ mark { padding: 0 1px; border-radius: 3px; background: color-mix(in srgb, var(--
 .fiche-edit { margin-left: auto; align-self: flex-start; }
 .fiche-section { margin: 20px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); }
 .avatar-lg { width: 64px; height: 64px; font-size: 1.3rem; flex: none; }
+.avatar-photo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex: none; background: var(--border); }
 .call-item.large .call-btn { padding: 8px 14px; font-size: .95rem; }
 .call-item.large .call-btn b { font-size: 1.05rem; }
 .call-item.large .call-type { font-size: .75rem; }

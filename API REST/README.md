@@ -103,7 +103,7 @@ L'API répond alors sur `http://127.0.0.1:8000/api`.
 |---|---|
 | Numéros d'urgence (`libelle`, `numero`) | `/api/numeros-urgence` (mêmes 5 routes) |
 | Personnel de garde (`username` = identifiant AD ; libellé, service et métier lus dans l'AD) | `GET /api/personnel`, `GET /api/personnel/{id}`, `POST /api/personnel`, `PUT\|PATCH /api/personnel/{id}`, `DELETE /api/personnel/{id}` ; `GET /api/personnel/services` et `/metiers` listent les valeurs en usage, pour les filtres |
-| Annuaire du personnel, **lu dans l'AD, lecture seule** | `GET /api/personnes` (recherche, voir plus bas), `GET /api/personnes/services`, `GET /api/personnes/metiers`, `GET /api/personnes/{identifiant AD}` |
+| Annuaire du personnel, **lu dans l'AD, lecture seule** | `GET /api/personnes` (recherche, voir plus bas), `GET /api/personnes/services`, `GET /api/personnes/metiers`, `GET /api/personnes/{identifiant AD}`, `GET /api/personnes/{identifiant AD}/photo` |
 | Numéros de garde (`numero`, `type`, `personnelDeGardeId`) | `/api/numeros-garde` (mêmes 5 routes) |
 | Gardes (`personnelDeGardeId`, `dateDebut`, `dateFin` en `AAAA-MM-JJ`, bornes incluses) | `/api/gardes` (mêmes 5 routes) ; `GET /api/gardes?date=AAAA-MM-JJ` ne renvoie que les gardes couvrant ce jour (la « garde en cours » de l'interface) |
 | Recherche dans l'annuaire AD, pour choisir un personnel de garde (JWT admin, `q` de 2 à 50 caractères) | `GET /api/ad/recherche?q=dupont` : 20 comptes au plus, `[{ username, prenom, nom, email, libelle }]` |
@@ -201,7 +201,7 @@ erDiagram
 
 ## Annuaire du personnel et AD
 
-**Annuaire du personnel (`/api/personnes`).** Il n'est pas saisi : il est lu dans l'AD, avec le compte technique `LDAP_SEARCH_DN`, sur les comptes **actifs** de l'unité d'organisation `LDAP_DIRECTORY_DN` (comptes désactivés exclus). Pour chaque compte : nom, prénom, e-mail, service (`department`), poste (`title`) et **tous les numéros, quel que soit leur type** (`telephoneNumber`, `mobile`, `ipPhone`, `pager`, fax et leurs variantes « autres » ; un même numéro n'apparaît qu'une fois ; `homePhone`, numéro personnel, n'est jamais lu). Les modifier = modifier l'AD.
+**Annuaire du personnel (`/api/personnes`).** Il n'est pas saisi : il est lu dans l'AD, avec le compte technique `LDAP_SEARCH_DN`, sur les comptes **actifs** de l'unité d'organisation `LDAP_DIRECTORY_DN` (comptes désactivés exclus). Pour chaque compte : nom, prénom, e-mail, service (`department`), poste (`title`) et **les numéros professionnels** (`telephoneNumber`, `ipPhone`, `pager`, fax et leurs variantes « autres » ; un même numéro n'apparaît qu'une fois ; `mobile`, `otherMobile` et `homePhone`, numéros personnels, ne sont jamais lus, et un numéro 06/07 saisi ailleurs est écarté). La fiche (`GET /api/personnes/{identifiant}`) ajoute le `responsable` (`manager`) et l'`equipe` (`directReports`), résolus parmi les comptes de l'annuaire, et le `matricule` (`employeeID`) **réservé aux administrateurs (JWT)**. La photo (`thumbnailPhoto`) est servie à la demande par `GET /api/personnes/{identifiant}/photo` (404 sans photo). Les modifier = modifier l'AD.
 
 L'AD est lu une fois puis gardé **en cache une heure** (`DirectoryCatalog`) : la recherche, les filtres, le tri et la pagination se font en mémoire, sans requête LDAP à chaque frappe (environ 0,4 s pour charger 1 700 comptes, puis quelques millisecondes). Les changements de l'AD apparaissent au plus tard après une heure, ou tout de suite après `app:ldap:sync`.
 

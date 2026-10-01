@@ -16,7 +16,8 @@ class DirectoryCatalog
     public const SORT_SERVICE = 'service';
     public const SORTS = [self::SORT_NOM, self::SORT_SERVICE];
 
-    private const CACHE_KEY = 'directory.catalog.v1';
+    private const CACHE_KEY = 'directory.catalog.v2';
+    private const PHOTO_KEY = 'directory.photo.';
 
     private static ?\Transliterator $transliterator = null;
 
@@ -44,6 +45,54 @@ class DirectoryCatalog
         }
 
         return null;
+    }
+
+    /**
+     * Responsable et équipe d'un compte, résolus (DN -> identifiant et nom) parmi les comptes du catalogue.
+     * Les DN qui ne sont pas dans l'annuaire du personnel (autre unité d'organisation, compte désactivé) sont ignorés.
+     *
+     * @return array{responsable: array{username: string, nom: string}|null, equipe: list<array{username: string, nom: string}>}
+     */
+    public function relations(DirectoryEntry $entry): array
+    {
+        $byDn = [];
+        foreach ($this->rows() as $row) {
+            if (null !== ($row['entry']['dn'] ?? null)) {
+                $byDn[self::normalizeDn($row['entry']['dn'])] = DirectoryEntry::fromArray($row['entry']);
+            }
+        }
+
+        $resolve = static function (string $dn) use ($byDn): ?array {
+            $found = $byDn[self::normalizeDn($dn)] ?? null;
+
+            return null === $found ? null : ['username' => $found->username, 'nom' => $found->fullName()];
+        };
+
+        $team = array_values(array_filter(array_map($resolve, $entry->reportDns)));
+        usort($team, static fn (array $a, array $b) => self::fold($a['nom']) <=> self::fold($b['nom']));
+
+        return [
+            'responsable' => null === $entry->managerDn ? null : $resolve($entry->managerDn),
+            'equipe' => $team,
+        ];
+    }
+
+    /**
+     * Photo du compte (octets bruts), lue dans l'AD à la demande puis gardée en cache ; null si le compte est inconnu ou sans photo.
+     */
+    public function photo(string $username): ?string
+    {
+        if (null === $entry = $this->find($username)) {
+            return null;
+        }
+
+        $encoded = $this->cache->get(self::PHOTO_KEY.md5(strtolower($entry->username)), function (ItemInterface $item) use ($entry): string {
+            $item->expiresAfter($this->ttl);
+
+            return base64_encode($this->lookup->photo($entry->username) ?? '');
+        });
+
+        return '' === $encoded ? null : base64_decode($encoded, true);
     }
 
     /**
@@ -180,6 +229,11 @@ class DirectoryCatalog
 
             return $rows;
         });
+    }
+
+    private static function normalizeDn(string $dn): string
+    {
+        return mb_strtolower(preg_replace('/\s*,\s*/', ',', trim($dn)) ?? $dn);
     }
 
     private static function fold(?string $text): string

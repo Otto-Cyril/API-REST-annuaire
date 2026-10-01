@@ -7,6 +7,7 @@ use App\Ldap\DirectoryEntry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -105,15 +106,33 @@ class PersonneController extends AbstractController
     {
         $entry = $this->catalog->find($username) ?? throw new NotFoundHttpException('Ressource introuvable.');
 
-        return new JsonResponse($this->present($entry));
+        return new JsonResponse($this->present($entry, true));
+    }
+
+    /**
+     * Photo (thumbnailPhoto de l'AD) d'une personne, lue à la demande. Public (GET). 200 (image) ; 404 si la personne n'existe pas ou n'a pas de photo.
+     */
+    #[Route('/{username}/photo', requirements: ['username' => '[A-Za-z0-9._$-]{1,50}'], methods: ['GET'])]
+    public function photo(string $username): Response
+    {
+        $photo = $this->catalog->photo($username) ?? throw new NotFoundHttpException('Ressource introuvable.');
+
+        $response = new Response($photo);
+        // thumbnailPhoto est un JPEG dans l'immense majorité des cas ; PNG reconnu à sa signature.
+        $response->headers->set('Content-Type', str_starts_with($photo, "\x89PNG") ? 'image/png' : 'image/jpeg');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->setPublic();
+        $response->setMaxAge(3600);
+
+        return $response;
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function present(DirectoryEntry $entry): array
+    private function present(DirectoryEntry $entry, bool $detail = false): array
     {
-        return [
+        $person = [
             'username' => $entry->username,
             'prenom' => $entry->prenom,
             'nom' => $entry->nom,
@@ -122,6 +141,16 @@ class PersonneController extends AbstractController
             'metier' => null === $entry->title ? null : ['id' => $entry->title, 'libelle' => $entry->title],
             'numeros' => $entry->numbers,
         ];
+
+        if ($detail) {
+            $person += $this->catalog->relations($entry);
+            // Le matricule n'est visible que des administrateurs (JWT).
+            if ($this->isGranted('ROLE_ADMIN')) {
+                $person['matricule'] = $entry->matricule;
+            }
+        }
+
+        return $person;
     }
 
     private function positiveInt(Request $request, string $name, int $default): int
