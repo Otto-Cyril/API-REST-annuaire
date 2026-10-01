@@ -152,6 +152,74 @@ php bin/phpunit
 Les tests utilisent une base séparée (suffixe `_test`), vidée avant chaque test, et un JWT généré localement ;
 la connexion LDAP est testée avec un faux annuaire, sans réseau.
 
+## Modèle de données
+
+```mermaid
+erDiagram
+    SERVICE ||--o{ PERSONNE : "regroupe"
+    METIER ||--o{ PERSONNE : "qualifie"
+    SERVICE ||--o{ PERSONNEL_DE_GARDE : "regroupe"
+    METIER ||--o{ PERSONNEL_DE_GARDE : "qualifie"
+    PERSONNEL_DE_GARDE ||--o{ NUMERO_GARDE : "joignable par"
+    PERSONNEL_DE_GARDE ||--o{ GARDE : "assure"
+
+    SERVICE {
+        int id PK
+        string libelle
+        string localisation
+    }
+    METIER {
+        int id PK
+        string libelle
+        string nom
+        string prenom
+    }
+    PERSONNE {
+        int id PK
+        string nom
+        string prenom
+        string email "facultatif"
+        string telephone "facultatif"
+        string dect "facultatif"
+        int service_id FK
+        int metier_id FK
+    }
+    PERSONNEL_DE_GARDE {
+        int id PK
+        string libelle
+        int service_id FK
+        int metier_id FK
+    }
+    NUMERO_GARDE {
+        int id PK
+        string numero
+        string type "Fixe, DECT…"
+        int personnel_de_garde_id FK
+    }
+    GARDE {
+        int id PK
+        date date_debut
+        date date_fin "incluse"
+        int personnel_de_garde_id FK
+    }
+    NUMERO_URGENCE {
+        int id PK
+        string libelle
+        string numero
+    }
+    TRACE {
+        int id PK
+        string username "compte AD"
+        datetime date_action
+        string action_realise
+    }
+```
+
+- `PERSONNE` alimente l'annuaire du personnel, `PERSONNEL_DE_GARDE` la page de garde : ce sont deux tables distinctes, sans lien entre elles.
+- Supprimer un personnel de garde supprime ses numéros et ses gardes. Supprimer un service ou un métier encore utilisé est refusé (409).
+- `NUMERO_URGENCE` et `TRACE` sont autonomes. `TRACE` est le journal des actions d'administration ; le compte y est conservé en texte, car les comptes viennent de l'AD.
+- `METIER` porte `nom` et `prenom` (colonnes issues d'un ancien champ `username`, voir la migration `Version20260925094737`) ; ils sont obligatoires mais n'ont pas de rôle fonctionnel.
+
 ## Structure
 
 ```
