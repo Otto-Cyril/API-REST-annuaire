@@ -90,7 +90,7 @@ L'API répond alors sur `http://127.0.0.1:8000/api`.
 
 | Code | Signification |
 |---|---|
-| 401 | Identifiants invalides ou JWT absent / invalide |
+| 401 | Identifiant inconnu, mot de passe incorrect ou JWT absent / invalide |
 | 429 | Trop de tentatives de connexion (5 par IP et identifiant, 30 par IP, sur 15 minutes) |
 | 503 | Annuaire LDAP indisponible |
 

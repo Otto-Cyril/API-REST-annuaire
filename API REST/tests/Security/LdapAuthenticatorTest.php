@@ -117,7 +117,7 @@ class LdapAuthenticatorTest extends TestCase
     {
         $this->ldapReturns([]);
 
-        $this->assertAuthenticationFails($this->authenticator(), $this->loginRequest(['username' => 'x', 'password' => 'y']), CustomUserMessageAuthenticationException::class, 'Identifiants invalides.');
+        $this->assertAuthenticationFails($this->authenticator(), $this->loginRequest(['username' => 'x', 'password' => 'y']), CustomUserMessageAuthenticationException::class, 'Identifiant inconnu.');
     }
 
     public function testMauvaisMotDePasse(): void
@@ -129,7 +129,7 @@ class LdapAuthenticatorTest extends TestCase
             }
         });
 
-        $this->assertAuthenticationFails($this->authenticator(), $this->loginRequest(['username' => 'jdoe', 'password' => 'faux']), CustomUserMessageAuthenticationException::class, 'Identifiants invalides.');
+        $this->assertAuthenticationFails($this->authenticator(), $this->loginRequest(['username' => 'jdoe', 'password' => 'faux']), CustomUserMessageAuthenticationException::class, 'Mot de passe incorrect.');
     }
 
     public function testAnnuaireInjoignableRenvoieUneErreurServeur(): void
@@ -161,11 +161,11 @@ class LdapAuthenticatorTest extends TestCase
         $authenticator = $this->authenticator(userLimit: 2);
         $request = $this->loginRequest(['username' => 'jdoe', 'password' => 'x']);
 
-        $this->assertAuthenticationFails($authenticator, $request, CustomUserMessageAuthenticationException::class, 'Identifiants invalides.');
-        $this->assertAuthenticationFails($authenticator, $request, CustomUserMessageAuthenticationException::class, 'Identifiants invalides.');
+        $this->assertAuthenticationFails($authenticator, $request, CustomUserMessageAuthenticationException::class, 'Identifiant inconnu.');
+        $this->assertAuthenticationFails($authenticator, $request, CustomUserMessageAuthenticationException::class, 'Identifiant inconnu.');
         $this->assertAuthenticationFails($authenticator, $request, TooManyLoginAttemptsAuthenticationException::class);
         // Un autre identifiant n'est pas bloqué par le compteur du premier
-        $this->assertAuthenticationFails($authenticator, $this->loginRequest(['username' => 'autre', 'password' => 'x']), CustomUserMessageAuthenticationException::class, 'Identifiants invalides.');
+        $this->assertAuthenticationFails($authenticator, $this->loginRequest(['username' => 'autre', 'password' => 'x']), CustomUserMessageAuthenticationException::class, 'Identifiant inconnu.');
     }
 
     public function testLimitationParAdresseIp(): void

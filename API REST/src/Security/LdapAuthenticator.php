@@ -79,7 +79,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         }
 
         if (0 === \count($results)) {
-            throw new CustomUserMessageAuthenticationException('Identifiants invalides.');
+            throw new CustomUserMessageAuthenticationException('Identifiant inconnu.');
         }
 
         $entry = $results[0];
@@ -88,7 +88,7 @@ class LdapAuthenticator extends AbstractAuthenticator
             // Vérifie le mot de passe en effectuant un bind avec le DN trouvé
             $this->ldap->bind($entry->getDn(), $password);
         } catch (InvalidCredentialsException) {
-            throw new CustomUserMessageAuthenticationException('Identifiants invalides.');
+            throw new CustomUserMessageAuthenticationException('Mot de passe incorrect.');
         } catch (LdapExceptionInterface $e) {
             throw new AuthenticationServiceException('Annuaire LDAP indisponible.', previous: $e);
         }
