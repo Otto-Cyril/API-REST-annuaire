@@ -97,7 +97,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         if ('' !== $this->adminGroupDn) {
             $memberOf = array_map('strtolower', $entry->getAttribute('memberOf') ?? []);
             if (!\in_array(strtolower($this->adminGroupDn), $memberOf, true)) {
-                throw new CustomUserMessageAuthenticationException('Ce compte n\'est pas autorisé à accéder à cette API.');
+                throw new CustomUserMessageAuthenticationException('Ce compte n\'est pas autorisé car il n\'est pas admin.');
             }
         }
 
