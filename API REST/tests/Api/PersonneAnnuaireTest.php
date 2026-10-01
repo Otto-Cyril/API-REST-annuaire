@@ -107,6 +107,30 @@ class PersonneAnnuaireTest extends ApiTestCase
         $this->assertSame([], $noms('?q=introuvable'));
     }
 
+    public function testTriParPertinenceQuandOnCherche(): void
+    {
+        FakeDirectoryLookup::add('mgarcin', 'Marie', 'Garcin', null, 'Radiologie', 'Manipulateur');   // nom qui commence par « gar »
+        FakeDirectoryLookup::add('pdegardel', 'Paul', 'Degardel', null, 'Pharmacie', 'Pharmacien');   // « gar » au milieu du nom
+        FakeDirectoryLookup::add('tmartin', 'Théo', 'Martin', null, 'Garderie', 'Aide');               // « gar » seulement dans le service
+        $noms = fn (string $qs) => array_column($this->request('GET', '/api/personnes'.$qs), 'username');
+
+        // Par défaut (q saisi) : nom qui commence par le mot, puis nom qui le contient, puis les autres champs
+        $this->assertSame(['lgarcia', 'mgarcin', 'pdegardel', 'tmartin'], $noms('?q=gar'));
+        // Mot identique à un mot du nom : en premier
+        $this->assertSame(['mclaire', 'tmartin'], $noms('?q=martin'));
+        // Un tri explicite reste respecté
+        $this->assertSame(['pdegardel', 'lgarcia', 'mgarcin', 'tmartin'], $noms('?q=gar&sort=nom')); // par nom : Degardel, Garcia, Garcin, Martin
+    }
+
+    public function testRechercheDUnSeulCaractereRefusee(): void
+    {
+        $this->request('GET', '/api/personnes?q=a');
+        $this->assertStatus(400);
+
+        $this->request('GET', '/api/personnes?q=ab');
+        $this->assertStatus(200);
+    }
+
     public function testFiltresParServiceEtPoste(): void
     {
         $noms = fn (string $qs) => array_column($this->request('GET', '/api/personnes'.$qs), 'username');

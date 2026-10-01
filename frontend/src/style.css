@@ -615,3 +615,4 @@ img.avatar-xl { border-radius: 50%; object-fit: cover; background: var(--border)
 @media (prefers-reduced-motion: reduce) {
   .urgence-list, .garde-groups, .ct-scroll, .ad-results { animation: none; mask-image: none; }
 }
+.search-hint { margin: 6px 4px 0; font-size: .85rem; }

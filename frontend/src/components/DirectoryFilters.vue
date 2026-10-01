@@ -5,6 +5,7 @@ import Icon from './Icon.vue'
 
 defineProps({
   sortable: { type: Boolean, default: true }, // false : pas de liste « Trier par » (tri par nom imposé)
+  relevance: Boolean, // propose le tri « Pertinence » (annuaire AD)
   filters: Object,
   services: Array,
   metiers: Array,
@@ -31,10 +32,13 @@ defineEmits(['reset', 'submit'])
       <option v-for="m in metiers" :key="m.id" :value="String(m.id)">{{ m.libelle }}</option>
     </select>
     <select v-if="sortable" v-model="filters.sort" aria-label="Trier par">
+      <option v-if="relevance" value="pertinence">Trier par pertinence</option>
       <option value="nom">Trier par nom</option>
       <option value="service">Trier par service</option>
     </select>
   </form>
+
+  <p v-if="filters.q.trim().length === 1" class="muted search-hint" role="status">Saisissez au moins 2 caractères pour lancer la recherche.</p>
 
   <div v-if="hasFilters" class="active-filters">
     <span class="muted">Filtres :</span>

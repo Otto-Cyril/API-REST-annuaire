@@ -7,15 +7,20 @@ import { get } from '../api'
 // `path` : ressource de l'API (ex. '/personnel', '/personnes').
 // `requireFilter` : ne charge rien (liste vide) tant qu'aucune recherche ni aucun filtre n'est saisi.
 // `servicesPath` / `metiersPath` : routes qui listent les services et les métiers proposés dans les filtres.
-export function useDirectory(path, { requireFilter = false, servicesPath, metiersPath } = {}) {
+// `relevance` : propose le tri par pertinence (défaut) quand une recherche est saisie ; l'API doit l'accepter (sort=pertinence).
+export const MIN_QUERY = 2
+
+export function useDirectory(path, { requireFilter = false, servicesPath, metiersPath, relevance = false } = {}) {
   const route = useRoute()
   const router = useRouter()
 
+  const defaultSort = relevance ? 'pertinence' : 'nom'
+  const initialSort = (v) => (v === 'service' || v === 'nom' || (relevance && v === 'pertinence') ? v : defaultSort)
   const filters = reactive({
     q: String(route.query.q ?? ''),
     serviceId: String(route.query.service ?? ''),
     metierId: String(route.query.metier ?? ''),
-    sort: route.query.sort === 'service' ? 'service' : 'nom', // tri, pas un filtre : exclu de hasFilters / resetFilters
+    sort: initialSort(route.query.sort), // tri, pas un filtre : exclu de hasFilters / resetFilters
   })
   const page = ref(Number(route.query.page) > 0 ? Number(route.query.page) : 1)
   const list = ref([])
@@ -29,7 +34,9 @@ export function useDirectory(path, { requireFilter = false, servicesPath, metier
   let timer
   let seq = 0
 
-  const hasFilters = computed(() => Boolean(filters.q || filters.serviceId || filters.metierId))
+  // Une recherche d'un seul caractère n'est pas lancée (trop de résultats sans intérêt).
+  const searchText = computed(() => (filters.q.trim().length >= MIN_QUERY ? filters.q.trim() : ''))
+  const hasFilters = computed(() => Boolean(searchText.value || filters.serviceId || filters.metierId))
   const resetFilters = () => Object.assign(filters, { q: '', serviceId: '', metierId: '' })
   const serviceLabel = computed(() => services.value.find((s) => String(s.id) === filters.serviceId)?.libelle)
   const metierLabel = computed(() => metiers.value.find((m) => String(m.id) === filters.metierId)?.libelle)
@@ -37,10 +44,10 @@ export function useDirectory(path, { requireFilter = false, servicesPath, metier
 
   function syncUrl() {
     const query = {}
-    if (filters.q) query.q = filters.q
+    if (searchText.value) query.q = searchText.value
     if (filters.serviceId) query.service = filters.serviceId
     if (filters.metierId) query.metier = filters.metierId
-    if (filters.sort !== 'nom') query.sort = filters.sort
+    if (filters.sort !== defaultSort) query.sort = filters.sort
     if (page.value > 1) query.page = String(page.value)
     router.replace({ query })
   }
@@ -67,7 +74,7 @@ export function useDirectory(path, { requireFilter = false, servicesPath, metier
       return
     }
     try {
-      const res = await get(path, { ...filters, page: page.value })
+      const res = await get(path, { ...filters, q: searchText.value, page: page.value })
       if (mine !== seq) return // une requête plus récente a pris le relais
       list.value = res.data
       meta.total = res.total ?? res.data.length

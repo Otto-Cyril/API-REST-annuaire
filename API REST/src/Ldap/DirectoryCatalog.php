@@ -14,9 +14,10 @@ class DirectoryCatalog
 {
     public const SORT_NOM = 'nom';
     public const SORT_SERVICE = 'service';
-    public const SORTS = [self::SORT_NOM, self::SORT_SERVICE];
+    public const SORT_PERTINENCE = 'pertinence';
+    public const SORTS = [self::SORT_NOM, self::SORT_SERVICE, self::SORT_PERTINENCE];
 
-    private const CACHE_KEY = 'directory.catalog.v2';
+    private const CACHE_KEY = 'directory.catalog.v3';
     private const PHOTO_KEY = 'directory.photo.';
 
     private static ?\Transliterator $transliterator = null;
@@ -135,6 +136,8 @@ class DirectoryCatalog
     /**
      * Chaque mot de $query doit se retrouver (sans tenir compte de la casse ni des accents) dans l'identifiant, le nom,
      * l'e-mail, le service, le poste ou un numéro. $service et $metier filtrent sur la valeur exacte.
+     * Tri « pertinence » : mot identique à un mot du nom, puis nom qui commence par le mot, puis nom qui le contient,
+     * puis les autres champs (service, poste, e-mail, numéros) ; à égalité, par nom.
      *
      * @return array{items: list<DirectoryEntry>, total: int}
      */
@@ -157,8 +160,15 @@ class DirectoryCatalog
             return true;
         });
 
-        $key = self::SORT_SERVICE === $sort ? 'sortService' : 'sortNom';
-        usort($found, static fn (array $a, array $b) => [$a[$key], $a['entry']['username']] <=> [$b[$key], $b['entry']['username']]);
+        if (self::SORT_PERTINENCE === $sort && [] !== $words) {
+            $scores = array_map(static fn (array $row) => self::relevance($row['names'], $words), $found);
+            $keys = array_keys($found);
+            usort($keys, static fn (int $a, int $b) => [$scores[$a], $found[$a]['sortNom'], $found[$a]['entry']['username']] <=> [$scores[$b], $found[$b]['sortNom'], $found[$b]['entry']['username']]);
+            $found = array_map(static fn (int $k) => $found[$k], $keys);
+        } else {
+            $key = self::SORT_SERVICE === $sort ? 'sortService' : 'sortNom';
+            usort($found, static fn (array $a, array $b) => [$a[$key], $a['entry']['username']] <=> [$b[$key], $b['entry']['username']]);
+        }
 
         return [
             'items' => array_map(static fn (array $row) => DirectoryEntry::fromArray($row['entry']), \array_slice($found, ($page - 1) * $limit, $limit)),
@@ -206,7 +216,7 @@ class DirectoryCatalog
     }
 
     /**
-     * @return list<array{entry: array<string, mixed>, haystack: string, sortNom: string, sortService: string}>
+     * @return list<array{entry: array<string, mixed>, haystack: string, names: list<string>, sortNom: string, sortService: string}>
      */
     private function rows(): array
     {
@@ -222,6 +232,7 @@ class DirectoryCatalog
                         $entry->username, $entry->prenom, $entry->nom, $entry->displayName, $entry->email, $entry->department, $entry->title,
                         ...array_column($entry->numbers, 'numero'),
                     ])),
+                    'names' => array_values(array_filter(preg_split('/[^a-z0-9]+/', self::fold(implode(' ', [$entry->prenom, $entry->nom, $entry->username]))) ?: [])),
                     'sortNom' => $nom,
                     'sortService' => self::fold($entry->department ?? '~').' '.$nom,
                 ];
@@ -229,6 +240,30 @@ class DirectoryCatalog
 
             return $rows;
         });
+    }
+
+    /**
+     * Plus le score est bas, plus la ligne est pertinente (0 = mot identique à un mot du nom, 3 = trouvé hors du nom).
+     *
+     * @param list<string> $names mots du prénom, du nom et de l'identifiant
+     * @param list<string> $words mots recherchés
+     */
+    private static function relevance(array $names, array $words): int
+    {
+        $score = 0;
+        foreach ($words as $word) {
+            $best = 3;
+            foreach ($names as $token) {
+                if ($token === $word) {
+                    $best = 0;
+                    break;
+                }
+                $best = min($best, str_starts_with($token, $word) ? 1 : (str_contains($token, $word) ? 2 : 3));
+            }
+            $score += $best;
+        }
+
+        return $score;
     }
 
     private static function normalizeDn(string $dn): string

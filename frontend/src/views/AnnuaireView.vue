@@ -14,7 +14,7 @@ const auth = useAuth()
 
 // L'annuaire du personnel est lu directement dans l'AD (lecture seule) : services et postes viennent de l'AD.
 const { filters, page, list, meta, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
-  useDirectory('/personnes', { requireFilter: true, servicesPath: '/personnes/services', metiersPath: '/personnes/metiers' })
+  useDirectory('/personnes', { requireFilter: true, relevance: true, servicesPath: '/personnes/services', metiersPath: '/personnes/metiers' })
 
 const fullName = (p) => [p.prenom, p.nom].filter(Boolean).join(' ') || p.username
 
@@ -28,6 +28,7 @@ const showCount = computed(() => hasFilters.value && !error.value && !(loading.v
 
   <DirectoryFilters
     :filters="filters"
+    relevance
     :services="services"
     :metiers="metiers"
     :has-filters="hasFilters"

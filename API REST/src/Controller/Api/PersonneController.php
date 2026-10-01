@@ -27,8 +27,8 @@ class PersonneController extends AbstractController
 
     /**
      * Recherche et liste paginée du personnel (comptes actifs de l'unité d'organisation LDAP_DIRECTORY_DN de l'AD). Public (GET).
-     * Paramètres : q (mots recherchés dans le nom, l'e-mail, le service, le poste, un numéro ; 50 car. max), serviceId et metierId
-     * (valeurs exactes du service et du poste, voir /services et /metiers), sort (nom, défaut, ou service), page (défaut 1), limit (défaut 20, max 100).
+     * Paramètres : q (mots recherchés dans le nom, l'e-mail, le service, le poste, un numéro ; 2 à 50 car.), serviceId et metierId
+     * (valeurs exactes du service et du poste, voir /services et /metiers), sort (pertinence, défaut quand q est saisi, nom, défaut sinon, ou service), page (défaut 1), limit (défaut 20, max 100).
      * Renvoie 200 et les en-têtes X-Total-Count, X-Page, X-Per-Page, X-Total-Pages ; 400 si un paramètre est invalide ; 503 si l'AD est injoignable.
      */
     #[Route('', methods: ['GET'])]
@@ -38,8 +38,12 @@ class PersonneController extends AbstractController
         if (mb_strlen($q) > 50) {
             throw new BadRequestHttpException('q ne doit pas dépasser 50 caractères.');
         }
+        if ('' !== $q && mb_strlen($q) < 2) {
+            throw new BadRequestHttpException('q doit contenir au moins 2 caractères.');
+        }
 
-        $sort = (string) $request->query->get('sort', DirectoryCatalog::SORT_NOM);
+        // Sans tri demandé : par pertinence quand on cherche, par nom sinon.
+        $sort = (string) $request->query->get('sort', '' === $q ? DirectoryCatalog::SORT_NOM : DirectoryCatalog::SORT_PERTINENCE);
         if (!\in_array($sort, DirectoryCatalog::SORTS, true)) {
             throw new BadRequestHttpException(sprintf('sort invalide (valeurs : %s).', implode(', ', DirectoryCatalog::SORTS)));
         }

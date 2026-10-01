@@ -121,7 +121,7 @@ L'API répond alors sur `http://127.0.0.1:8000/api`.
 
 | Paramètre | Description |
 |---|---|
-| `q` | Mots recherchés (50 caractères max), insensible à la casse, dans l'identifiant, le libellé, le service et le métier du personnel de garde. Pour `/api/personnes` (annuaire AD, insensible aussi aux accents) : identifiant, nom, prénom, e-mail, service, poste et numéros |
+| `q` | Mots recherchés (2 à 50 caractères pour `/api/personnes`, qui les trie par pertinence : mot identique au nom, puis nom qui commence par le mot, puis nom qui le contient, puis autres champs ; `sort=nom` ou `service` pour changer), insensible à la casse, dans l'identifiant, le libellé, le service et le métier du personnel de garde. Pour `/api/personnes` (annuaire AD, insensible aussi aux accents) : identifiant, nom, prénom, e-mail, service, poste et numéros |
 | `serviceId`, `metierId` | Filtres sur la valeur exacte du service et du métier (libellés de l'AD ; listes dans `/api/personnel/services` et `/metiers`, ou `/api/personnes/services` et `/metiers` pour l'annuaire) |
 | `page` | Numéro de page (défaut 1) |
 | `limit` | Taille de page (défaut 20, max 100) |
