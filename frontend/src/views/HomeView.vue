@@ -3,12 +3,25 @@ import Pagination from '../components/Pagination.vue'
 import CallNumber from '../components/CallNumber.vue'
 import DirectoryFilters from '../components/DirectoryFilters.vue'
 import Icon from '../components/Icon.vue'
+import { ref, onMounted } from 'vue'
+import { get } from '../api'
+import { today, peopleOnDuty } from '../garde'
 import { useAuth } from '../stores/auth'
 import { useDirectory } from '../composables/useDirectory'
 
 const auth = useAuth()
 const { filters, page, list, meta, overall, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
   useDirectory('/personnel', { requireFilter: true })
+
+// Nombre de personnes de garde aujourd'hui (null tant que non chargé ou si l'API échoue : la carte est alors masquée)
+const onDutyCount = ref(null)
+onMounted(async () => {
+  try {
+    onDutyCount.value = peopleOnDuty((await get('/gardes', { date: today() })).data).length
+  } catch {
+    /* compteur indisponible */
+  }
+})
 </script>
 
 <template>
@@ -18,9 +31,14 @@ const { filters, page, list, meta, overall, services, metiers, loading, error, h
     <button type="button" class="stat" :class="{ active: !hasFilters }" @click="resetFilters">
       <b>{{ overall ?? meta.total }}</b><span>Personnel</span>
     </button>
+    <div v-if="onDutyCount !== null" class="stat"><b>{{ onDutyCount }}</b><span>De garde aujourd'hui</span></div>
     <div class="stat"><b>{{ services.length }}</b><span>Services</span></div>
-    <div class="stat"><b>{{ metiers.length }}</b><span>Métiers</span></div>
   </section>
+
+  <div v-if="!hasFilters && services.length" class="active-filters" aria-label="Raccourcis par service">
+    <span class="muted">Raccourcis :</span>
+    <button v-for="s in services" :key="s.id" type="button" class="filter-pill" @click="filters.serviceId = String(s.id)">{{ s.libelle }}</button>
+  </div>
 
   <DirectoryFilters
     :filters="filters"

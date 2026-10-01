@@ -33,7 +33,8 @@
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 Arial, Helvetica, sans-serif; }
+html { font-size: 14px; } /* base des rem : réduit toute l'interface (16px = taille navigateur par défaut) */
+body { margin: 0; background: var(--bg); color: var(--text); font: 1rem/1.5 Arial, Helvetica, sans-serif; }
 a { color: var(--primary); }
 h1 { font-size: 1.5rem; margin: 1rem 0; }
 h2 { font-size: 1.15rem; }
