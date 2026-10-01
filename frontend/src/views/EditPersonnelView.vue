@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { get, post, put, del } from '../api'
 import { pageTitle } from '../router'
 import Icon from '../components/Icon.vue'
+import AdPicker from '../components/AdPicker.vue'
 
 const props = defineProps({ id: String })
 const router = useRouter()
@@ -17,11 +18,9 @@ const backLabel = !hasBack ? 'Retour à la liste' : previous.startsWith('/person
 const goBack = () => (hasBack ? router.back() : router.push('/garde'))
 
 const p = ref(null)
-const services = ref([])
-const metiers = ref([])
 const loadError = ref('')
 
-const form = reactive({ libelle: '', serviceId: '', metierId: '' })
+const form = reactive({ username: '' })
 const formError = ref('')
 const fieldErrors = ref({})
 const saving = ref(false)
@@ -39,7 +38,7 @@ const toRow = (n) => ({ id: n.id, type: n.type, numero: n.numero, busy: false, e
 const msg = (e) => (e.errors ? Object.values(e.errors).flat().join(' ') : '') || e.message
 
 function hydrate() {
-  Object.assign(form, { libelle: p.value.libelle, serviceId: p.value.service?.id ?? '', metierId: p.value.metier?.id ?? '' })
+  Object.assign(form, { username: p.value.username })
   numbers.value = p.value.numerosGarde.map(toRow)
   document.title = pageTitle(`Modifier ${p.value.libelle}`)
 }
@@ -47,10 +46,7 @@ function hydrate() {
 async function load() {
   loadError.value = ''
   try {
-    const [pers, s, m] = await Promise.all([get(`/personnel/${props.id}`), get('/services'), get('/metiers')])
-    p.value = pers.data
-    services.value = s.data
-    metiers.value = m.data
+    p.value = (await get(`/personnel/${props.id}`)).data
     hydrate()
   } catch (e) {
     loadError.value = e.status === 404 ? 'Fiche introuvable.' : e.message
@@ -63,18 +59,11 @@ async function save() {
   fieldErrors.value = {}
   saved.value = false
   try {
-    await put(`/personnel/${props.id}`, {
-      libelle: form.libelle,
-      serviceId: Number(form.serviceId),
-      metierId: Number(form.metierId),
-    })
-    p.value = {
-      ...p.value,
-      libelle: form.libelle,
-      service: services.value.find((s) => s.id === Number(form.serviceId)),
-      metier: metiers.value.find((m) => m.id === Number(form.metierId)),
-    }
-    document.title = pageTitle(`Modifier ${form.libelle}`)
+    // La réponse porte le libellé, le service et le métier relus dans l'AD si l'identifiant a changé.
+    const res = await put(`/personnel/${props.id}`, { username: form.username })
+    p.value = { ...p.value, ...res.data, numerosGarde: p.value.numerosGarde }
+    Object.assign(form, { username: p.value.username })
+    document.title = pageTitle(`Modifier ${p.value.libelle}`)
     saved.value = true
   } catch (e) {
     formError.value = e.message
@@ -148,26 +137,16 @@ onMounted(load)
 
       <div class="edit-grid">
         <label class="wide">
-          <span class="edit-label">Libellé</span>
-          <input v-model="form.libelle" maxlength="50" required />
-          <small v-for="m in fieldErrors.libelle ?? []" :key="m" class="error">{{ m }}</small>
+          <span class="edit-label">Identifiant AD</span>
+          <AdPicker v-model="form.username" :max="50" />
+          <small class="muted">Cherchez la personne par son nom : le nom, le service et le métier sont lus automatiquement dans l'AD.</small>
+          <small v-for="m in fieldErrors.username ?? []" :key="m" class="error">{{ m }}</small>
         </label>
-        <label>
-          <span class="edit-label">Service</span>
-          <select v-model="form.serviceId" required>
-            <option value="" disabled>Choisir…</option>
-            <option v-for="s in services" :key="s.id" :value="s.id">{{ s.libelle }}</option>
-          </select>
-          <small v-for="m in fieldErrors.service ?? fieldErrors.serviceId ?? []" :key="m" class="error">{{ m }}</small>
-        </label>
-        <label>
-          <span class="edit-label">Métier</span>
-          <select v-model="form.metierId" required>
-            <option value="" disabled>Choisir…</option>
-            <option v-for="m in metiers" :key="m.id" :value="m.id">{{ m.libelle }}</option>
-          </select>
-          <small v-for="m in fieldErrors.metier ?? fieldErrors.metierId ?? []" :key="m" class="error">{{ m }}</small>
-        </label>
+        <p class="muted wide">
+          <span v-if="p.service">{{ p.service.libelle }}</span><span v-else>Sans service</span>
+          · <span v-if="p.metier">{{ p.metier.libelle }}</span><span v-else>sans poste</span>
+          (lus dans l'AD, relus à chaque changement d'identifiant ou par <code>app:ldap:sync</code>)
+        </p>
       </div>
 
       <p v-if="formError" class="error" role="alert">{{ formError }}</p>

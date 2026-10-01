@@ -294,22 +294,21 @@ button.danger { color: var(--danger); }
 .tag-metier { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--text); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 .tag-loc { font-size: .82rem; }
 .call-list { display: flex; flex-wrap: wrap; gap: 6px; }
-/* Grand écran : une seule ligne par personne, colonnes alignées d'une carte à l'autre (nom, service, métier, lieu, numéros à droite) */
+/* Grand écran : une ligne par personne (nom | service et poste | numéros à droite). Les libellés de l'AD sont parfois longs
+   (« Mère-enft,obstétriq hosp./Cons ») : ils passent à la ligne au lieu d'être coupés. */
 @media (min-width: 1100px) {
-  /* Colonnes partagées (subgrid) : chacune prend la largeur de son contenu le plus long, les numéros récupèrent le reste */
-  .cards:has(> .card.person) { grid-template-columns: fit-content(15rem) fit-content(12rem) fit-content(12rem) fit-content(9rem) minmax(0, 1fr); column-gap: 14px; }
-  .card.person { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; gap: 0 14px; }
-  .card.person .person-body, .card.person .tags { display: contents; }
-  .card.person .card-title { grid-column: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card.person .tag-service { grid-column: 2; }
-  .card.person .tag-metier { grid-column: 3; }
-  .card.person .tag-loc { grid-column: 4; }
-  .card.person .tag { justify-self: start; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card.person .call-list { grid-column: 5; gap: 4px 8px; justify-content: flex-end; align-items: center; min-width: 0; }
-  .card.person .call-ico { display: none; } /* place gagnée : le libellé (DECT, Fixe…) suffit */
+  .cards:has(> .card.person) { grid-template-columns: minmax(11rem, 17rem) minmax(0, 1fr) fit-content(30rem); column-gap: 16px; }
+  .card.person { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; align-items: center; gap: 0 16px; }
+  .card.person .person-body { display: contents; }
+  .card.person .card-title { grid-column: 1; overflow-wrap: anywhere; }
+  .card.person .tags { grid-column: 2; margin-top: 0; min-width: 0; }
+  .card.person .call-list { grid-column: 3; gap: 4px 8px; justify-content: flex-end; align-items: center; min-width: 0; }
+  .card.person .call-ico { display: none; } /* place gagnée : le libellé (Tél., IP…) suffit */
   .card.person .call-btn { padding: 3px 8px; }
-  .card.person .mail-btn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 }
+/* Étiquettes et e-mail : jamais tronqués, ils passent à la ligne si besoin */
+.tag { max-width: 100%; overflow-wrap: anywhere; line-height: 1.35; }
+.mail-btn { max-width: 100%; overflow-wrap: anywhere; }
 .call-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 8px;
   background: var(--primary); color: var(--on-primary); text-decoration: none; font-size: .8rem;
@@ -531,3 +530,32 @@ td.actions button { padding: 4px 12px; font-size: .85rem; } /* boutons de ligne 
   .stat b { display: inline; font-size: 1.5rem; }
 }
 ::placeholder { color: var(--muted); opacity: 1; }
+
+/* Recherche dans l'AD (AdPicker) */
+.ad-picker { position: relative; display: grid; gap: 4px; }
+.ad-results { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; margin: 4px 0 0; padding: 4px; list-style: none; max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: 0 8px 24px var(--glow); }
+.ad-results button { display: grid; width: 100%; gap: 0; padding: 6px 10px; border: 0; border-radius: 6px; background: transparent; text-align: left; }
+.ad-results button span { font-size: .8rem; }
+.ad-results button:hover, .ad-results button.active { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.ad-empty { padding: 8px 10px; font-size: .85rem; }
+
+/* Tableau de bord : tableaux d'effectifs (CountTable) */
+.ct-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-bottom: 14px; }
+@media (min-width: 900px) { .ct-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ct { display: grid; gap: 10px; align-content: start; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.ct-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
+.ct-head h2 { margin: 0; font-size: 1rem; }
+.ct-head .muted { font-size: .8rem; }
+.ct-scroll { max-height: 30rem; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.ct-scroll table { width: 100%; }
+.ct-scroll thead th { position: sticky; top: 0; z-index: 1; background: var(--surface); }
+.ct-scroll th, .ct-scroll td { padding: 6px 10px; white-space: normal; overflow-wrap: anywhere; font-size: .85rem; }
+.ct-scroll a { color: var(--text); text-decoration: none; }
+.ct-scroll a:hover { color: var(--primary); text-decoration: underline; }
+.ct .ct-num { width: 8.5rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ct-sort { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.ct-sort.on::after { content: ' ↓'; }
+.ct-num .ct-sort.on::after { content: ' ↓'; }
+.stat-link { text-decoration: none; color: var(--text); border-left: 3px solid var(--accent); }
+.stat-link:hover { border-color: var(--accent); box-shadow: 0 0 16px var(--glow); }
+.dash-note { font-size: .85rem; }

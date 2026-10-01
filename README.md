@@ -31,7 +31,7 @@ Le dépôt contient deux applications :
 ## Fonctionnalités du frontend
 
 - **Public** : annuaire du personnel (page d'accueil `/`, recherche et filtres), personnel de garde (`/garde`), fiches, barre du haut avec les panneaux « Numéros d'urgence » et « Garde en cours » (les personnes dont une garde couvre aujourd'hui, par service, avec leurs numéros Fixe, DECT et autres, et la prochaine garde si personne n'est de garde), mode clair/sombre.
-- **Administration** (connexion requise, menu « Administration ») : services, métiers, numéros d'urgence, personnel de garde, planning des gardes (`/admin/gardes` : qui est de garde, du jour X au jour Y inclus), numéros de garde, annuaire du personnel, et journal des actions (`/admin/traces`).
+- **Administration** (connexion requise, menu « Administration ») : numéros d'urgence, personnel de garde (saisi par identifiant AD : nom, service et métier sont lus dans l'AD), planning des gardes (`/admin/gardes` : qui est de garde, du jour X au jour Y inclus), numéros de garde, et journal des actions (`/admin/traces`). L'annuaire du personnel est lu dans l'AD (lecture seule) : pour les admins, un bouton « Modifier » ouvre la fiche dans l'outil d'administration de l'AD, si son adresse est renseignée dans `frontend/.env.local` (`VITE_AD_EDIT_URL`, voir `frontend/.env.example`).
 
 ## Tests
 

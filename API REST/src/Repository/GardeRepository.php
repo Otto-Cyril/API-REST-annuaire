@@ -18,7 +18,7 @@ class GardeRepository extends ServiceEntityRepository
     }
 
     /**
-     * Gardes couvrant le jour donné (bornes incluses), avec le personnel, son service, son métier et ses numéros.
+     * Gardes couvrant le jour donné (bornes incluses), avec le personnel et ses numéros.
      *
      * @return Garde[]
      */
@@ -79,8 +79,6 @@ class GardeRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('g')
             ->join('g.personnelDeGarde', 'p')->addSelect('p')
-            ->leftJoin('p.service', 's')->addSelect('s')
-            ->leftJoin('p.metier', 'm')->addSelect('m')
             ->leftJoin('p.numerosGarde', 'n')->addSelect('n');
     }
 }

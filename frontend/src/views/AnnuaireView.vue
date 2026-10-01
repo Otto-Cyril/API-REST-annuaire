@@ -1,22 +1,25 @@
 <script setup>
+import { computed } from 'vue'
 import Pagination from '../components/Pagination.vue'
 import CallNumber from '../components/CallNumber.vue'
 import DirectoryFilters from '../components/DirectoryFilters.vue'
 import Icon from '../components/Icon.vue'
 import Highlight from '../components/Highlight.vue'
-import { useAuth } from '../stores/auth'
 import { useDirectory } from '../composables/useDirectory'
+import { useAuth } from '../stores/auth'
+import { adEditUrl } from '../adLink'
 import { withServiceHeaders } from '../list'
-import { computed } from 'vue'
 
 const auth = useAuth()
-const { filters, page, list, meta, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
-  useDirectory('/personnes', { requireFilter: true })
 
-const fullName = (p) => `${p.prenom} ${p.nom}`
+// L'annuaire du personnel est lu directement dans l'AD (lecture seule) : services et postes viennent de l'AD.
+const { filters, page, list, meta, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
+  useDirectory('/personnes', { requireFilter: true, servicesPath: '/personnes/services', metiersPath: '/personnes/metiers' })
+
+const fullName = (p) => [p.prenom, p.nom].filter(Boolean).join(' ') || p.username
 
 // Tri par service : un en-tête par service dans la liste
-const rows = computed(() => (filters.sort === 'service' ? withServiceHeaders(list.value, (p) => p.service) : list.value))
+const rows = computed(() => (filters.sort === 'service' ? withServiceHeaders(list.value, (p) => p.service ?? { id: '', libelle: 'Sans service' }) : list.value))
 const showCount = computed(() => hasFilters.value && !error.value && !(loading.value && !list.value.length))
 </script>
 
@@ -59,30 +62,30 @@ const showCount = computed(() => hasFilters.value && !error.value && !(loading.v
   </div>
 
   <ul v-else class="cards" :class="{ busy: loading }">
-    <template v-for="p in rows" :key="p.id">
+    <template v-for="p in rows" :key="p.username ?? p.id">
     <li v-if="p.header" class="group-title">{{ p.label }}</li>
     <li v-else class="card person">
       <div class="person-body">
-        <span class="card-title"><Highlight :text="fullName(p)" :query="filters.q" /></span>
+        <RouterLink :to="{ name: 'personne', params: { username: p.username } }" class="card-title"><Highlight :text="fullName(p)" :query="filters.q" /></RouterLink>
         <div class="tags">
-          <span class="tag tag-service"><Highlight :text="p.service.libelle" :query="filters.q" /></span>
-          <span class="tag tag-metier"><Highlight :text="p.metier.libelle" :query="filters.q" /></span>
-          <span v-if="p.service.localisation" class="muted tag-loc">{{ p.service.localisation }}</span>
+          <span v-if="p.service" class="tag tag-service"><Highlight :text="p.service.libelle" :query="filters.q" /></span>
+          <span v-if="p.metier" class="tag tag-metier"><Highlight :text="p.metier.libelle" :query="filters.q" /></span>
         </div>
       </div>
       <div class="call-list">
-        <CallNumber v-if="p.telephone" :numero="{ numero: p.telephone, type: 'Tél.' }" />
-        <CallNumber v-if="p.dect" :numero="{ numero: p.dect, type: 'DECT' }" />
+        <CallNumber v-for="n in p.numeros" :key="n.numero" :numero="n" />
         <a v-if="p.email" :href="`mailto:${p.email}`" class="mail-btn" :aria-label="`Écrire à ${fullName(p)}`">
           <Icon name="mail" /> {{ p.email }}
         </a>
-        <RouterLink
-          v-if="auth.isAdmin"
-          :to="{ name: 'personne-edit', params: { id: p.id } }"
+        <a
+          v-if="auth.isAdmin && adEditUrl(p.username)"
+          :href="adEditUrl(p.username)"
+          target="_blank"
+          rel="noopener"
           class="edit-btn"
-          :aria-label="`Modifier la fiche de ${fullName(p)}`"
-          title="Modifier la fiche"
-        ><Icon name="edit" /></RouterLink>
+          :aria-label="`Modifier la fiche de ${fullName(p)} dans l'AD`"
+          title="Modifier dans l'AD"
+        ><Icon name="edit" /></a>
       </div>
     </li>
     </template>

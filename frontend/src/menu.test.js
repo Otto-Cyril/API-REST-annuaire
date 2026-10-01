@@ -5,28 +5,28 @@ import { tokenUsername } from './jwt'
 const res = (...keys) => Object.fromEntries(keys.map((k) => [k, { title: k.toUpperCase() }]))
 
 describe('buildNavGroups', () => {
-  const groups = buildNavGroups(res('services', 'metiers', 'numeros-urgence', 'personnel', 'gardes', 'numeros-garde'))
+  const groups = buildNavGroups(res('numeros-urgence', 'personnel', 'gardes', 'numeros-garde'))
 
   it('regroupe les ressources et ajoute le journal dans « Suivi »', () => {
     expect(groups.map((g) => [g.id, g.items.map((i) => i.id)])).toEqual([
       ['gardes', ['personnel', 'gardes','numeros-garde']],
       ['urgence', ['numeros-urgence']],
-      ['referentiels', ['services', 'metiers']],
-      ['suivi', ['traces']],
+      ['suivi', ['dashboard', 'traces']],
     ])
   })
 
   it('range une ressource inconnue dans « Autres » et omet les groupes vides', () => {
-    const g = buildNavGroups(res('services', 'nouveau'))
-    expect(g.map((x) => x.id)).toEqual(['referentiels', 'suivi', 'autres'])
+    const g = buildNavGroups(res('numeros-urgence', 'nouveau'))
+    expect(g.map((x) => x.id)).toEqual(['urgence', 'suivi', 'autres'])
     expect(g[2].items[0].to).toEqual({ name: 'admin', params: { resource: 'nouveau' } })
   })
 })
 
 describe('activeGroupId', () => {
-  const groups = buildNavGroups(res('services', 'gardes'))
+  const groups = buildNavGroups(res('numeros-urgence', 'gardes'))
 
-  it('trouve le groupe de la ressource ou du journal affiché', () => {
+  it('trouve le groupe de la ressource, du tableau de bord ou du journal affiché', () => {
+    expect(activeGroupId(groups, { name: 'dashboard', params: {} })).toBe('suivi')
     expect(activeGroupId(groups, { name: 'admin', params: { resource: 'gardes' } })).toBe('gardes')
     expect(activeGroupId(groups, { name: 'traces', params: {} })).toBe('suivi')
   })

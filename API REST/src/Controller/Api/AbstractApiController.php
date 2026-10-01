@@ -3,6 +3,8 @@
 namespace App\Controller\Api;
 
 use App\Exception\ValidationFailedException;
+use App\Ldap\DirectoryEntry;
+use App\Ldap\DirectoryLookupInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ObjectRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -97,6 +99,19 @@ abstract class AbstractApiController extends AbstractController
         }
 
         return $entity;
+    }
+
+    /**
+     * Compte AD correspondant à l'identifiant saisi : 422 s'il est vide ou introuvable, 503 si l'AD est injoignable.
+     */
+    protected function directoryAccount(DirectoryLookupInterface $directory, ?string $username): DirectoryEntry
+    {
+        $username = trim((string) $username);
+        if ('' === $username) {
+            throw new ValidationFailedException(['username' => ["L'identifiant AD est obligatoire."]]);
+        }
+
+        return $directory->find($username) ?? throw new ValidationFailedException(['username' => ['Identifiant AD introuvable.']]);
     }
 
     protected function queryId(Request $request, string $name): ?int

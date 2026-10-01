@@ -3,6 +3,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { get, post, put, del } from '../api'
 import { resources } from '../resources'
 import Pagination from '../components/Pagination.vue'
+import AdPicker from '../components/AdPicker.vue'
 import { pageTitle } from '../router'
 import { showToast } from '../toast'
 
@@ -149,7 +150,9 @@ watch(cfg, (c) => c && (document.title = pageTitle(`${c.title} (admin)`)), { imm
             <option value="" disabled>Choisir…</option>
             <option v-for="o in options[f.options] ?? []" :key="o.id" :value="o.id">{{ o[f.optionLabel] }}</option>
           </select>
+          <AdPicker v-else-if="f.type === 'ad'" v-model="form[f.key]" :max="f.max" />
           <input v-else v-model="form[f.key]" :type="f.type ?? 'text'" :maxlength="f.max" :required="!f.optional" />
+          <small v-if="f.hint" class="muted">{{ f.hint }}</small>
           <small v-for="m in fieldErrors[f.key] ?? []" :key="m" class="error" role="alert">{{ m }}</small>
         </label>
       </div>

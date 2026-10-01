@@ -18,7 +18,8 @@ async function submit() {
   try {
     await auth.login(username.value, password.value)
     const target = String(route.query.redirect ?? '')
-    router.push(target.startsWith('/admin') ? target : '/admin')
+    // Retour à la page admin demandée, sinon l'annuaire du personnel
+    router.push(target.startsWith('/admin') ? target : '/')
   } catch (e) {
     error.value = e.message
   } finally {

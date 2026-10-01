@@ -22,20 +22,20 @@ class PersonnelDeGardeRepository extends ServiceEntityRepository
     }
 
     /**
+     * $service et $metier : valeurs exactes (libellés de l'AD copiés en base).
+     *
      * @return Paginator<PersonnelDeGarde>
      */
-    public function search(?string $q, ?int $serviceId, ?int $metierId, int $page, int $limit, string $sort = self::SORT_NOM): Paginator
+    public function search(?string $q, ?string $service, ?string $metier, int $page, int $limit, string $sort = self::SORT_NOM): Paginator
     {
         $qb = $this->createQueryBuilder('p')
-            ->leftJoin('p.service', 's')->addSelect('s')
-            ->leftJoin('p.metier', 'm')->addSelect('m')
             ->leftJoin('p.numerosGarde', 'n')->addSelect('n')
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
         // Tri : par service puis nom, ou par nom (défaut) ; l'id départage les égalités pour une pagination stable.
         if (self::SORT_SERVICE === $sort) {
-            $qb->orderBy('s.libelle', 'ASC')->addOrderBy('p.libelle', 'ASC');
+            $qb->orderBy('p.service', 'ASC')->addOrderBy('p.libelle', 'ASC');
         } else {
             $qb->orderBy('p.libelle', 'ASC');
         }
@@ -46,22 +46,39 @@ class PersonnelDeGardeRepository extends ServiceEntityRepository
             $escaped = addcslashes(mb_strtolower($word), '%_[\\');
             $qb->andWhere($qb->expr()->orX(
                 sprintf('LOWER(p.libelle) LIKE :q%d ESCAPE \'\\\'', $i),
-                sprintf('LOWER(s.libelle) LIKE :q%d ESCAPE \'\\\'', $i),
-                sprintf('LOWER(s.localisation) LIKE :q%d ESCAPE \'\\\'', $i),
-                sprintf('LOWER(m.libelle) LIKE :q%d ESCAPE \'\\\'', $i),
+                sprintf('LOWER(p.username) LIKE :q%d ESCAPE \'\\\'', $i),
+                sprintf('LOWER(p.service) LIKE :q%d ESCAPE \'\\\'', $i),
+                sprintf('LOWER(p.metier) LIKE :q%d ESCAPE \'\\\'', $i),
             ))->setParameter('q'.$i, '%'.$escaped.'%');
         }
 
-        if (null !== $serviceId) {
-            $qb->andWhere('s.id = :serviceId')->setParameter('serviceId', $serviceId);
+        if (null !== $service) {
+            $qb->andWhere('p.service = :service')->setParameter('service', $service);
         }
 
-        if (null !== $metierId) {
-            $qb->andWhere('m.id = :metierId')->setParameter('metierId', $metierId);
+        if (null !== $metier) {
+            $qb->andWhere('p.metier = :metier')->setParameter('metier', $metier);
         }
 
         // fetchJoinCollection : la jointure sur numerosGarde multiplie les lignes,
         // le Paginator pagine donc sur les personnels et non sur les lignes jointes.
         return new Paginator($qb, true);
+    }
+
+    /**
+     * Valeurs distinctes (triées) du service ou du poste du personnel de garde, pour les filtres.
+     *
+     * @param 'service'|'metier' $field
+     *
+     * @return list<string>
+     */
+    public function distinct(string $field): array
+    {
+        $column = 'metier' === $field ? 'p.metier' : 'p.service';
+
+        return array_column(
+            $this->createQueryBuilder('p')->select("DISTINCT $column AS value")->where("$column IS NOT NULL")->orderBy($column, 'ASC')->getQuery()->getArrayResult(),
+            'value',
+        );
     }
 }

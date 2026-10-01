@@ -9,7 +9,7 @@ class SecurityTest extends ApiTestCase
     /** @return iterable<string, array{string}> */
     public static function publicReadRoutes(): iterable
     {
-        foreach (['services', 'metiers', 'personnel', 'numeros-garde', 'numeros-urgence'] as $r) {
+        foreach (['personnel', 'numeros-garde', 'numeros-urgence'] as $r) {
             yield $r => ["/api/$r"];
         }
     }
@@ -24,7 +24,7 @@ class SecurityTest extends ApiTestCase
     /** @return iterable<string, array{string, string}> */
     public static function writeRoutes(): iterable
     {
-        foreach (['services', 'metiers', 'personnel', 'numeros-garde', 'numeros-urgence'] as $r) {
+        foreach (['personnel', 'numeros-garde', 'numeros-urgence'] as $r) {
             yield "POST $r" => ['POST', "/api/$r"];
             yield "PUT $r" => ['PUT', "/api/$r/1"];
             yield "PATCH $r" => ['PATCH', "/api/$r/1"];
@@ -49,10 +49,10 @@ class SecurityTest extends ApiTestCase
 
     public function testTokenInvalideRefuse(): void
     {
-        $this->client->request('POST', '/api/services', [], [], [
+        $this->client->request('POST', '/api/personnel', [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer pas.un.jwt',
-        ], '{"libelle":"x","localisation":"y"}');
+        ], '{"username":"x"}');
         $this->assertStatus(401);
     }
 

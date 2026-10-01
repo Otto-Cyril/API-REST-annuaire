@@ -45,3 +45,23 @@ services:
             $adminGroupDn: '%env(LDAP_ADMIN_GROUP_DN)%'
             $loginUserLimiter: '@limiter.login_user'
             $loginIpLimiter: '@limiter.login_ip'
+
+    App\Ldap\DirectoryLookup:
+        arguments:
+            $baseDn: '%env(LDAP_BASE_DN)%'
+            $searchDn: '%env(LDAP_SEARCH_DN)%'
+            $searchPassword: '%env(LDAP_SEARCH_PASSWORD)%'
+            $userQuery: '%env(LDAP_USER_QUERY)%'
+            $directoryDn: '%env(LDAP_DIRECTORY_DN)%'
+            $directoryScope: '%env(LDAP_DIRECTORY_SCOPE)%'
+
+    App\Ldap\DirectoryLookupInterface: '@App\Ldap\DirectoryLookup'
+
+when@test:
+    services:
+        # AD simulé : aucun appel LDAP pendant les tests
+        App\Tests\Support\FakeDirectoryLookup:
+            public: true
+        App\Ldap\DirectoryLookupInterface:
+            alias: App\Tests\Support\FakeDirectoryLookup
+            public: true

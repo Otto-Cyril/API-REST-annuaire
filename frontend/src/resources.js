@@ -8,32 +8,6 @@
 const frDate = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
 
 export const resources = {
-  services: {
-    title: 'Services',
-    path: '/services',
-    columns: [
-      { key: 'libelle', label: 'Libellé' },
-      { key: 'localisation', label: 'Localisation' },
-    ],
-    fields: [
-      { key: 'libelle', label: 'Libellé', max: 50 },
-      { key: 'localisation', label: 'Localisation', max: 50 },
-    ],
-  },
-  metiers: {
-    title: 'Métiers',
-    path: '/metiers',
-    columns: [
-      { key: 'libelle', label: 'Libellé' },
-      { key: 'nom', label: 'Nom' },
-      { key: 'prenom', label: 'Prénom' },
-    ],
-    fields: [
-      { key: 'libelle', label: 'Libellé', max: 50, wide: true },
-      { key: 'nom', label: 'Nom', max: 50 },
-      { key: 'prenom', label: 'Prénom', max: 50 },
-    ],
-  },
   'numeros-urgence': {
     title: "Numéros d'urgence",
     path: '/numeros-urgence',
@@ -52,50 +26,16 @@ export const resources = {
     path: '/personnel',
     paginated: true,
     columns: [
-      { key: 'libelle', label: 'Libellé' },
+      { key: 'libelle', label: 'Nom' },
+      { key: 'username', label: 'Identifiant AD' },
       { key: 'service', label: 'Service', get: (r) => r.service?.libelle },
       { key: 'metier', label: 'Métier', get: (r) => r.metier?.libelle },
     ],
+    // Le nom, le service et le métier viennent de l'AD à partir de l'identifiant : seul l'identifiant est saisi.
     fields: [
-      { key: 'libelle', label: 'Libellé', max: 50, wide: true },
-      { key: 'serviceId', label: 'Service', options: 'services', optionLabel: 'libelle' },
-      { key: 'metierId', label: 'Métier', options: 'metiers', optionLabel: 'libelle' },
+      { key: 'username', label: 'Identifiant AD', type: 'ad', max: 50, wide: true, hint: "Cherchez la personne par son nom : le nom, le service et le métier sont lus automatiquement dans l'AD." },
     ],
-    toForm: (r) => ({ libelle: r.libelle, serviceId: r.service?.id, metierId: r.metier?.id }),
-  },
-  personnes: {
-    title: 'Annuaire du personnel',
-    path: '/personnes',
-    paginated: true,
-    hideFromMenu: true, // absent du menu « Administration » (la page reste accessible en /admin/personnes)
-    columns: [
-      { key: 'nom', label: 'Nom' },
-      { key: 'prenom', label: 'Prénom' },
-      { key: 'service', label: 'Service', get: (r) => r.service?.libelle },
-      { key: 'metier', label: 'Métier', get: (r) => r.metier?.libelle },
-      { key: 'email', label: 'E-mail' },
-      { key: 'telephone', label: 'Téléphone' },
-      { key: 'dect', label: 'DECT' },
-    ],
-    // optional : champ facultatif (une valeur vide est envoyée comme null) ; type : type de l'<input>.
-    fields: [
-      { key: 'nom', label: 'Nom', max: 50 },
-      { key: 'prenom', label: 'Prénom', max: 50 },
-      { key: 'serviceId', label: 'Service', options: 'services', optionLabel: 'libelle' },
-      { key: 'metierId', label: 'Métier', options: 'metiers', optionLabel: 'libelle' },
-      { key: 'email', label: 'E-mail', max: 100, type: 'email', optional: true, wide: true },
-      { key: 'telephone', label: 'Téléphone', max: 50, optional: true },
-      { key: 'dect', label: 'DECT', max: 50, optional: true },
-    ],
-    toForm: (r) => ({
-      nom: r.nom,
-      prenom: r.prenom,
-      serviceId: r.service?.id,
-      metierId: r.metier?.id,
-      email: r.email,
-      telephone: r.telephone,
-      dect: r.dect,
-    }),
+    toForm: (r) => ({ username: r.username }),
   },
   gardes: {
     title: 'Planning des gardes',

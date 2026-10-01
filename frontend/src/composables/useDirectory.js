@@ -6,7 +6,8 @@ import { get } from '../api'
 // (?q=&service=&metier=&sort=&page=) : lien partageable, retour arrière depuis une fiche.
 // `path` : ressource de l'API (ex. '/personnel', '/personnes').
 // `requireFilter` : ne charge rien (liste vide) tant qu'aucune recherche ni aucun filtre n'est saisi.
-export function useDirectory(path, { requireFilter = false } = {}) {
+// `servicesPath` / `metiersPath` : routes qui listent les services et les métiers proposés dans les filtres.
+export function useDirectory(path, { requireFilter = false, servicesPath, metiersPath } = {}) {
   const route = useRoute()
   const router = useRouter()
 
@@ -94,8 +95,8 @@ export function useDirectory(path, { requireFilter = false } = {}) {
   onMounted(async () => {
     load()
     try {
-      services.value = (await get('/services')).data
-      metiers.value = (await get('/metiers')).data
+      if (servicesPath) services.value = (await get(servicesPath)).data
+      if (metiersPath) metiers.value = (await get(metiersPath)).data
     } catch {
       /* les filtres restent vides, la recherche texte fonctionne toujours */
     }

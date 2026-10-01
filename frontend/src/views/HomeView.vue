@@ -13,10 +13,10 @@ import { useDirectory } from '../composables/useDirectory'
 
 const auth = useAuth()
 const { filters, page, list, meta, overall, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
-  useDirectory('/personnel', { requireFilter: true })
+  useDirectory('/personnel', { requireFilter: true, servicesPath: '/personnel/services', metiersPath: '/personnel/metiers' })
 
 // Tri par service : un en-tête par service dans la liste
-const rows = computed(() => (filters.sort === 'service' ? withServiceHeaders(list.value, (p) => p.service) : list.value))
+const rows = computed(() => (filters.sort === 'service' ? withServiceHeaders(list.value, (p) => p.service ?? { id: '', libelle: 'Sans service' }) : list.value))
 const showCount = computed(() => hasFilters.value && !error.value && !(loading.value && !list.value.length))
 
 // Nombre de personnes de garde aujourd'hui (null tant que non chargé ou si l'API échoue : la carte est alors masquée)
@@ -83,9 +83,8 @@ onMounted(async () => {
       <div class="person-body">
         <RouterLink :to="{ name: 'fiche', params: { id: p.id } }" class="card-title"><Highlight :text="p.libelle" :query="filters.q" /></RouterLink>
         <div class="tags">
-          <span class="tag tag-service"><Highlight :text="p.service.libelle" :query="filters.q" /></span>
-          <span class="tag tag-metier"><Highlight :text="p.metier.libelle" :query="filters.q" /></span>
-          <span v-if="p.service.localisation" class="muted tag-loc">{{ p.service.localisation }}</span>
+          <span v-if="p.service" class="tag tag-service"><Highlight :text="p.service.libelle" :query="filters.q" /></span>
+          <span v-if="p.metier" class="tag tag-metier"><Highlight :text="p.metier.libelle" :query="filters.q" /></span>
         </div>
       </div>
       <div class="call-list">

@@ -35,10 +35,9 @@ watchEffect(async () => {
       <div>
         <h1>{{ p.libelle }}</h1>
         <div class="tags">
-          <span class="tag tag-service">{{ p.service.libelle }}</span>
-          <span class="tag tag-metier">{{ p.metier.libelle }}</span>
+          <span v-if="p.service" class="tag tag-service">{{ p.service.libelle }}</span>
+          <span v-if="p.metier" class="tag tag-metier">{{ p.metier.libelle }}</span>
         </div>
-        <p v-if="p.service.localisation" class="fiche-loc muted">{{ p.service.localisation }}</p>
       </div>
       <RouterLink
         v-if="auth.isAdmin"

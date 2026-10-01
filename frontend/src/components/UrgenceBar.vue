@@ -5,6 +5,7 @@ import { get, post, put, del } from '../api'
 import { useAuth } from '../stores/auth'
 import Icon from './Icon.vue'
 import { frDate, today, relativeDay, peopleOnDuty, groupByService } from '../garde'
+import AdPicker from './AdPicker.vue'
 import { urgenceIcon } from '../urgence'
 
 const auth = useAuth()
@@ -46,30 +47,18 @@ const gManaging = ref(false)
 const gForm = ref(null) // null = fermé, sinon { kind: 'personne' | 'numero', id, ... }
 const gError = ref('')
 const gSaving = ref(false)
-const services = ref([])
-const metiers = ref([])
 
-async function toggleGManaging() {
+function toggleGManaging() {
   gManaging.value = !gManaging.value
   gForm.value = null
   gError.value = ''
-  if (gManaging.value && !services.value.length) {
-    try {
-      services.value = (await get('/services')).data
-      metiers.value = (await get('/metiers')).data
-    } catch (e) {
-      gError.value = describe(e)
-    }
-  }
 }
 
 function gEditPerson(p) {
   gForm.value = {
     kind: 'personne',
     id: p.id,
-    libelle: p.libelle,
-    serviceId: p.service?.id ?? '',
-    metierId: p.metier?.id ?? '',
+    username: p.username ?? '',
   }
   gError.value = ''
 }
@@ -85,8 +74,7 @@ async function gSave() {
   gError.value = ''
   try {
     if (f.kind === 'personne') {
-      const body = { libelle: f.libelle.trim(), serviceId: Number(f.serviceId), metierId: Number(f.metierId) }
-      await put(`/personnel/${f.id}`, body)
+      await put(`/personnel/${f.id}`, { username: f.username.trim() })
     } else {
       const body = { numero: f.numero.trim(), type: f.type.trim(), personnelDeGardeId: f.personId }
       if (f.id === 0) await post('/numeros-garde', body)
@@ -199,7 +187,7 @@ async function load() {
     numeros.value = urgences.data
     garde.value = peopleOnDuty(gardes.data)
     total.value = garde.value.length
-    if (filtreService.value !== null && !garde.value.some((p) => p.service.id === filtreService.value)) filtreService.value = null
+    if (filtreService.value !== null && !garde.value.some((p) => (p.service?.id ?? '') === filtreService.value)) filtreService.value = null
     prochaines.value = garde.value.length ? [] : peopleOnDuty((await get('/gardes/prochaines', { date: today() })).data)
     failed.value = false
   } catch {
@@ -287,7 +275,7 @@ onBeforeUnmount(() => clearInterval(timer))
             <ul>
               <li v-for="p in prochaines" :key="p.id">
                 <b>{{ p.libelle }}</b>
-                <span class="muted">{{ p.service.libelle }} · jusqu'au {{ frDate(p.periodes[0].dateFin) }}</span>
+                <span class="muted">{{ p.service?.libelle ? `${p.service.libelle} · ` : '' }}jusqu'au {{ frDate(p.periodes[0].dateFin) }}</span>
               </li>
             </ul>
           </div>
@@ -306,7 +294,7 @@ onBeforeUnmount(() => clearInterval(timer))
                 <span class="avatar" aria-hidden="true">{{ initials(p.libelle) }}</span>
                 <div class="garde-row-who">
                   <b>{{ p.libelle }}</b>
-                  <span class="muted">{{ p.metier.libelle }}</span>
+                  <span v-if="p.metier" class="muted">{{ p.metier.libelle }}</span>
                 </div>
                 <div class="garde-row-nums">
                   <span v-for="n in p.numerosGarde" :key="n.id" class="garde-row-num" :class="{ main: n.type === 'DECT' }">
@@ -321,7 +309,7 @@ onBeforeUnmount(() => clearInterval(timer))
                 <span class="garde-name">{{ p.libelle }}</span>
                 <div class="garde-details">
                   <span class="garde-tags">
-                    <span class="garde-tag alt">{{ p.metier.libelle }}</span>
+                    <span v-if="p.metier" class="garde-tag alt">{{ p.metier.libelle }}</span>
                   </span>
                   <span class="garde-nums">
                     <span v-for="n in p.numerosGarde" :key="n.id" class="chip-wrap">
@@ -344,16 +332,8 @@ onBeforeUnmount(() => clearInterval(timer))
         <template v-if="gManaging">
           <form v-if="gForm" class="urgence-form" @submit.prevent="gSave">
             <template v-if="gForm.kind === 'personne'">
-              <strong>Modifier la personne</strong>
-              <input v-model="gForm.libelle" maxlength="50" placeholder="Nom / libellé" aria-label="Nom" required />
-              <select v-model="gForm.serviceId" aria-label="Service" required>
-                <option value="" disabled>Service…</option>
-                <option v-for="s in services" :key="s.id" :value="s.id">{{ s.libelle }}</option>
-              </select>
-              <select v-model="gForm.metierId" aria-label="Métier" required>
-                <option value="" disabled>Métier…</option>
-                <option v-for="m in metiers" :key="m.id" :value="m.id">{{ m.libelle }}</option>
-              </select>
+              <strong>Modifier la personne (compte AD)</strong>
+              <AdPicker v-model="gForm.username" :max="50" />
             </template>
             <template v-else>
               <strong>{{ gForm.id === 0 ? 'Nouveau numéro' : 'Modifier le numéro' }} · {{ gForm.personLabel }}</strong>

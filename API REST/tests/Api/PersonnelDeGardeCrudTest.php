@@ -2,76 +2,132 @@
 
 namespace App\Tests\Api;
 
+use App\Tests\Support\FakeDirectoryLookup;
+
 class PersonnelDeGardeCrudTest extends ApiTestCase
 {
     public function testAffichageAvecServiceMetierEtNumeros(): void
     {
-        $service = $this->createService('Urgences', 'Bâtiment A');
-        $metier = $this->createMetier('Médecin');
-        $personnel = $this->createPersonnel('Dr Martin', $service, $metier);
+        $personnel = $this->createPersonnel('Dr Martin', 'Urgences', 'Médecin');
         $this->createNumeroGarde($personnel, '0102030405', 'Mobile');
 
         $data = $this->request('GET', '/api/personnel/'.$personnel->getId());
 
         $this->assertStatus(200);
         $this->assertSame('Dr Martin', $data['libelle']);
-        $this->assertSame('Urgences', $data['service']['libelle']);
-        $this->assertSame('Médecin', $data['metier']['libelle']);
+        $this->assertSame(['id' => 'Urgences', 'libelle' => 'Urgences'], $data['service']);
+        $this->assertSame(['id' => 'Médecin', 'libelle' => 'Médecin'], $data['metier']);
         $this->assertCount(1, $data['numerosGarde']);
         $this->assertSame('0102030405', $data['numerosGarde'][0]['numero']);
     }
 
-    public function testCreationAvecRelations(): void
+    public function testServiceEtMetierAbsentsSontNull(): void
     {
-        $service = $this->createService();
-        $metier = $this->createMetier();
+        $personnel = $this->createPersonnel('Dr Martin', null, null);
 
-        $data = $this->request('POST', '/api/personnel', [
-            'libelle' => 'Dr Durand',
-            'serviceId' => $service->getId(),
-            'metierId' => $metier->getId(),
-        ], admin: true);
+        $data = $this->request('GET', '/api/personnel/'.$personnel->getId());
+
+        $this->assertNull($data['service']);
+        $this->assertNull($data['metier']);
+    }
+
+    public function testCreationRecopieLibelleServiceEtMetierDepuisLAd(): void
+    {
+        $this->adAccount('pdurand', 'Paul', 'Durand', department: 'Cardiologie médicale', title: 'Infirmier');
+
+        $data = $this->request('POST', '/api/personnel', ['username' => 'pdurand'], admin: true);
 
         $this->assertStatus(201);
-        $this->assertSame($service->getId(), $data['service']['id']);
-        $this->assertSame($metier->getId(), $data['metier']['id']);
+        $this->assertSame('Paul Durand', $data['libelle']);
+        $this->assertSame(['id' => 'Cardiologie médicale', 'libelle' => 'Cardiologie médicale'], $data['service']);
+        $this->assertSame(['id' => 'Infirmier', 'libelle' => 'Infirmier'], $data['metier']);
         $traces = $this->request('GET', '/api/traces', admin: true);
         $this->assertSame('Création du personnel de garde #'.$data['id'], $traces[0]['actionRealise']);
     }
 
-    public function testCreationSansRelationsRenvoie422(): void
+    public function testCreationIgnoreLesChampsEnvoyesAutresQueLIdentifiant(): void
     {
-        $data = $this->request('POST', '/api/personnel', ['libelle' => 'Dr Durand'], admin: true);
+        $this->adAccount('pdurand', 'Paul', 'Durand', department: 'Cardiologie', title: 'Infirmier');
+
+        $data = $this->request('POST', '/api/personnel', ['username' => 'pdurand', 'libelle' => 'Pirate', 'service' => 'Faux', 'serviceId' => 1, 'metier' => 'Faux'], admin: true);
+
+        $this->assertStatus(201);
+        $this->assertSame('Paul Durand', $data['libelle']);
+        $this->assertSame('Cardiologie', $data['service']['libelle']);
+        $this->assertSame('Infirmier', $data['metier']['libelle']);
+    }
+
+    public function testCreationSansServiceNiPosteDansLAd(): void
+    {
+        $this->adAccount('pdurand', 'Paul', 'Durand');
+
+        $data = $this->request('POST', '/api/personnel', ['username' => 'pdurand'], admin: true);
+
+        $this->assertStatus(201);
+        $this->assertNull($data['service']);
+        $this->assertNull($data['metier']);
+    }
+
+    public function testCreationSansIdentifiantAdRenvoie422(): void
+    {
+        $data = $this->request('POST', '/api/personnel', ['libelle' => 'Saisi à la main'], admin: true);
 
         $this->assertStatus(422);
-        $this->assertArrayHasKey('service', $data['errors']);
-        $this->assertArrayHasKey('metier', $data['errors']);
+        $this->assertArrayHasKey('username', $data['errors']);
     }
 
-    public function testCreationAvecRelationsInvalidesRenvoie400(): void
+    public function testCreationAvecIdentifiantAdInconnuRenvoie422(): void
     {
-        $service = $this->createService();
-        $metier = $this->createMetier();
+        $data = $this->request('POST', '/api/personnel', ['username' => 'inconnu'], admin: true);
 
-        foreach ([999999, 'abc', null, true, [1], 0, -1, 2147483648] as $bad) {
-            $this->request('POST', '/api/personnel', ['libelle' => 'X', 'serviceId' => $bad, 'metierId' => $metier->getId()], admin: true);
-            $this->assertStatus(400);
-        }
-        $data = $this->request('POST', '/api/personnel', ['libelle' => 'X', 'serviceId' => $service->getId(), 'metierId' => 999999], admin: true);
-        $this->assertStatus(400);
-        $this->assertSame('metierId invalide.', $data['message']);
+        $this->assertStatus(422);
+        $this->assertSame(['Identifiant AD introuvable.'], $data['errors']['username']);
+        $this->assertSame(0, (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM personnel_de_garde'));
     }
 
-    public function testModificationChangeLeService(): void
+    public function testCreationDoublonRenvoie422(): void
     {
-        $personnel = $this->createPersonnel('Dr Martin');
-        $autre = $this->createService('Pédiatrie');
+        $this->adAccount('pdurand', 'Paul', 'Durand');
 
-        $data = $this->request('PATCH', '/api/personnel/'.$personnel->getId(), ['serviceId' => $autre->getId()], admin: true);
+        $this->request('POST', '/api/personnel', ['username' => 'pdurand'], admin: true);
+        $this->assertStatus(201);
+
+        $data = $this->request('POST', '/api/personnel', ['username' => 'PDURAND'], admin: true);
+        $this->assertStatus(422);
+        $this->assertArrayHasKey('username', $data['errors']);
+    }
+
+    public function testCreationAdInjoignableRenvoie503(): void
+    {
+        FakeDirectoryLookup::down();
+
+        $this->request('POST', '/api/personnel', ['username' => 'pdurand'], admin: true);
+
+        $this->assertStatus(503);
+    }
+
+    public function testModificationDeLIdentifiantRelitLAd(): void
+    {
+        $personnel = $this->createPersonnel('Dr Martin', 'Urgences', 'Médecin');
+        $this->adAccount('autre', 'Anne', 'Bernard', department: 'Pédiatrie', title: 'Sage-femme');
+
+        $data = $this->request('PATCH', '/api/personnel/'.$personnel->getId(), ['username' => 'autre'], admin: true);
 
         $this->assertStatus(200);
+        $this->assertSame('Anne Bernard', $data['libelle']);
         $this->assertSame('Pédiatrie', $data['service']['libelle']);
+        $this->assertSame('Sage-femme', $data['metier']['libelle']);
+    }
+
+    public function testLeLibelleLeServiceEtLeMetierNeSontJamaisModifiablesADirect(): void
+    {
+        $personnel = $this->createPersonnel('Dr Martin', 'Urgences', 'Médecin');
+
+        $data = $this->request('PATCH', '/api/personnel/'.$personnel->getId(), ['libelle' => 'Pirate', 'service' => 'Faux', 'serviceId' => 99], admin: true);
+
+        $this->assertStatus(200);
         $this->assertSame('Dr Martin', $data['libelle']);
+        $this->assertSame('Urgences', $data['service']['libelle']);
     }
 
     public function testSuppressionSupprimeLesNumerosDeGarde(): void
@@ -88,13 +144,9 @@ class PersonnelDeGardeCrudTest extends ApiTestCase
 
     public function testRecherchePaginee(): void
     {
-        $urgences = $this->createService('Urgences', 'Bâtiment A');
-        $pediatrie = $this->createService('Pédiatrie', 'Bâtiment B');
-        $medecin = $this->createMetier('Médecin');
-        $infirmier = $this->createMetier('Infirmier');
-        $this->createPersonnel('Alpha', $urgences, $medecin);
-        $this->createPersonnel('Bravo', $urgences, $infirmier);
-        $this->createPersonnel('Charlie', $pediatrie, $medecin);
+        $this->createPersonnel('Alpha', 'Urgences', 'Médecin');
+        $this->createPersonnel('Bravo', 'Urgences', 'Infirmier');
+        $this->createPersonnel('Charlie', 'Pédiatrie', 'Médecin');
 
         // Pagination + en-têtes, tri par libellé
         $data = $this->request('GET', '/api/personnel?limit=2&page=1');
@@ -109,26 +161,33 @@ class PersonnelDeGardeCrudTest extends ApiTestCase
         $data = $this->request('GET', '/api/personnel?limit=2&page=2');
         $this->assertSame(['Charlie'], array_column($data, 'libelle'));
 
-        // Recherche par mots (insensible à la casse) sur libellé, service, localisation, métier
+        // Recherche par mots (insensible à la casse) sur libellé, service, métier
         $this->assertSame(['Alpha'], array_column($this->request('GET', '/api/personnel?q=ALPHA'), 'libelle'));
         $this->assertSame(['Charlie'], array_column($this->request('GET', '/api/personnel?q=pédiatrie'), 'libelle'));
-        $this->assertSame(['Alpha', 'Bravo', 'Charlie'], array_column($this->request('GET', '/api/personnel?q=bâtiment'), 'libelle'));
-        $this->assertSame(['Charlie'], array_column($this->request('GET', '/api/personnel?q=bâtiment+pédiatrie'), 'libelle'));
+        $this->assertSame(['Alpha', 'Charlie'], array_column($this->request('GET', '/api/personnel?q=médecin'), 'libelle'));
         $this->assertSame(['Alpha'], array_column($this->request('GET', '/api/personnel?q=médecin+urgences'), 'libelle'));
         $this->assertSame([], $this->request('GET', '/api/personnel?q=zzz'));
 
-        // Filtres
-        $this->assertSame(['Alpha', 'Bravo'], array_column($this->request('GET', '/api/personnel?serviceId='.$urgences->getId()), 'libelle'));
-        $this->assertSame(['Alpha', 'Charlie'], array_column($this->request('GET', '/api/personnel?metierId='.$medecin->getId()), 'libelle'));
-        $this->assertSame(['Alpha'], array_column($this->request('GET', '/api/personnel?serviceId='.$urgences->getId().'&metierId='.$medecin->getId()), 'libelle'));
+        // Filtres : valeurs exactes du service et du métier
+        $this->assertSame(['Alpha', 'Bravo'], array_column($this->request('GET', '/api/personnel?serviceId=Urgences'), 'libelle'));
+        $this->assertSame(['Alpha', 'Charlie'], array_column($this->request('GET', '/api/personnel?metierId='.rawurlencode('Médecin')), 'libelle'));
+        $this->assertSame(['Alpha'], array_column($this->request('GET', '/api/personnel?serviceId=Urgences&metierId='.rawurlencode('Médecin')), 'libelle'));
+    }
+
+    public function testListesDesServicesEtDesMetiersEnregistres(): void
+    {
+        $this->createPersonnel('Alpha', 'Urgences', 'Médecin');
+        $this->createPersonnel('Bravo', 'Pédiatrie', 'Médecin');
+        $this->createPersonnel('Charlie', null, null);
+
+        $this->assertSame([['id' => 'Pédiatrie', 'libelle' => 'Pédiatrie'], ['id' => 'Urgences', 'libelle' => 'Urgences']], $this->request('GET', '/api/personnel/services'));
+        $this->assertSame([['id' => 'Médecin', 'libelle' => 'Médecin']], $this->request('GET', '/api/personnel/metiers'));
     }
 
     public function testTriParNomOuParService(): void
     {
-        $urgences = $this->createService('Urgences');
-        $pediatrie = $this->createService('Pédiatrie');
-        $this->createPersonnel('Alpha', $urgences);
-        $this->createPersonnel('Bravo', $pediatrie);
+        $this->createPersonnel('Alpha', 'Urgences');
+        $this->createPersonnel('Bravo', 'Pédiatrie');
 
         $this->assertSame(['Alpha', 'Bravo'], array_column($this->request('GET', '/api/personnel'), 'libelle'));
         $this->assertSame(['Alpha', 'Bravo'], array_column($this->request('GET', '/api/personnel?sort=nom'), 'libelle'));
@@ -148,7 +207,7 @@ class PersonnelDeGardeCrudTest extends ApiTestCase
 
     public function testParametresDeRechercheInvalides(): void
     {
-        foreach (['limit=0', 'limit=101', 'limit=abc', 'page=0', 'page=9223372036854775807', 'serviceId=x', 'metierId=-1', 'q='.str_repeat('a', 51)] as $qs) {
+        foreach (['limit=0', 'limit=101', 'limit=abc', 'page=0', 'page=9223372036854775807', 'q='.str_repeat('a', 51), 'serviceId='.str_repeat('a', 201)] as $qs) {
             $this->request('GET', '/api/personnel?'.$qs);
             $this->assertStatus(400);
         }

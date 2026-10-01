@@ -3,11 +3,10 @@
 namespace App\Tests\Api;
 
 use App\Entity\Garde;
-use App\Entity\Metier;
 use App\Entity\NumeroGarde;
 use App\Entity\PersonnelDeGarde;
-use App\Entity\Service;
 use App\Security\AdminUser;
+use App\Tests\Support\FakeDirectoryLookup;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -21,15 +20,17 @@ abstract class ApiTestCase extends WebTestCase
 {
     protected KernelBrowser $client;
     protected EntityManagerInterface $em;
+    private int $accounts = 0;
 
     protected function setUp(): void
     {
+        FakeDirectoryLookup::reset();
         $this->client = static::createClient();
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
 
         // Ordre : les tables enfants d'abord (clés étrangères).
         $connection = $this->em->getConnection();
-        foreach (['garde', 'numero_garde', 'personnel_de_garde', 'personne', 'service', 'metier', 'numero_urgence', 'trace'] as $table) {
+        foreach (['garde', 'numero_garde', 'personnel_de_garde', 'numero_urgence', 'trace'] as $table) {
             $connection->executeStatement('DELETE FROM '.$table);
         }
     }
@@ -66,34 +67,28 @@ abstract class ApiTestCase extends WebTestCase
         $this->assertSame($expected, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
     }
 
-    protected function createService(string $libelle = 'Urgences', string $localisation = 'Bâtiment A'): Service
-    {
-        $service = (new Service())->setLibelle($libelle)->setLocalisation($localisation);
-        $this->em->persist($service);
-        $this->em->flush();
-
-        return $service;
-    }
-
-    protected function createMetier(string $libelle = 'Médecin', string $nom = 'Dupont', string $prenom = 'Jean'): Metier
-    {
-        $metier = (new Metier())->setLibelle($libelle)->setNom($nom)->setPrenom($prenom);
-        $this->em->persist($metier);
-        $this->em->flush();
-
-        return $metier;
-    }
-
-    protected function createPersonnel(string $libelle, ?Service $service = null, ?Metier $metier = null): PersonnelDeGarde
+    /**
+     * Personnel de garde enregistré ; le service et le métier sont des libellés (copies de l'AD).
+     */
+    protected function createPersonnel(string $libelle, ?string $service = 'Urgences', ?string $metier = 'Médecin'): PersonnelDeGarde
     {
         $personnel = (new PersonnelDeGarde())
+            ->setUsername('compte'.++$this->accounts)
             ->setLibelle($libelle)
-            ->setService($service ?? $this->createService())
-            ->setMetier($metier ?? $this->createMetier());
+            ->setService($service)
+            ->setMetier($metier);
         $this->em->persist($personnel);
         $this->em->flush();
 
         return $personnel;
+    }
+
+    /**
+     * Compte AD simulé que l'API retrouvera à la création.
+     */
+    protected function adAccount(string $username, string $prenom = 'Jean', string $nom = 'Dupont', ?string $email = null, ?string $department = null, ?string $title = null): void
+    {
+        FakeDirectoryLookup::add($username, $prenom, $nom, $email, $department, $title);
     }
 
     protected function createNumeroGarde(PersonnelDeGarde $personnel, string $numero = '0102030405', string $type = 'Mobile'): NumeroGarde

@@ -8,6 +8,7 @@ const router = createRouter({
     { path: '/garde', name: 'garde', component: () => import('./views/HomeView.vue'), meta: { title: 'Personnel de garde' } },
     { path: '/annuaire', redirect: '/' },
     { path: '/personnel/:id(\\d+)', name: 'fiche', component: () => import('./views/FicheView.vue'), props: true, meta: { title: 'Fiche' } },
+    { path: '/personne/:username([A-Za-z0-9._$-]+)', name: 'personne', component: () => import('./views/PersonneFicheView.vue'), props: true, meta: { title: 'Fiche' } },
     { path: '/connexion', name: 'login', component: () => import('./views/LoginView.vue'), meta: { title: 'Connexion' } },
     { path: '/admin', redirect: '/admin/personnel' },
     {
@@ -18,11 +19,10 @@ const router = createRouter({
       meta: { admin: true, title: 'Modifier la fiche' },
     },
     {
-      path: '/admin/personnes/:id(\\d+)/modifier',
-      name: 'personne-edit',
-      component: () => import('./views/EditPersonneView.vue'),
-      props: true,
-      meta: { admin: true, title: 'Modifier la fiche' },
+      path: '/admin/tableau-de-bord',
+      name: 'dashboard',
+      component: () => import('./views/DashboardView.vue'),
+      meta: { admin: true, title: 'Tableau de bord' },
     },
     {
       path: '/admin/traces',

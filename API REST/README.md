@@ -34,6 +34,7 @@ Le fichier `.env` est ignoré par git : les valeurs ci-dessous sont à mettre da
 | `LDAP_BASE_DN` | Où chercher les utilisateurs | `OU=Comptes,OU=IMM,DC=immdom,DC=local` |
 | `LDAP_SEARCH_DN` / `LDAP_SEARCH_PASSWORD` | Compte technique de recherche | |
 | `LDAP_USER_QUERY` | Filtre de recherche de l'utilisateur | `(sAMAccountName={username})` |
+| `LDAP_DIRECTORY_DN` / `LDAP_DIRECTORY_SCOPE` | Unité d'organisation lue pour l'annuaire du personnel (comptes actifs ; `one` = directement dans l'OU, `sub` = avec ses sous-OU) | `OU=Utilisateurs,OU=Comptes,OU=IMM,DC=immdom,DC=local` / `one` |
 | `LDAP_ADMIN_GROUP_DN` | DN du groupe AD autorisé à écrire. **Vide = tout compte AD valide est admin** | `CN=GSG_APP_ANNUAIRE_ADMIN,OU=Applications,OU=Groupes,OU=IMM,DC=immdom,DC=local` |
 
 ### 2. Clés JWT
@@ -100,18 +101,19 @@ L'API répond alors sur `http://127.0.0.1:8000/api`.
 
 | Ressource | Routes |
 |---|---|
-| Services (`libelle`, `localisation`) | `GET /api/services`, `GET /api/services/{id}`, `POST /api/services`, `PUT\|PATCH /api/services/{id}`, `DELETE /api/services/{id}` |
-| Métiers (`libelle`, `nom`, `prenom`) | `/api/metiers` (mêmes 5 routes) |
 | Numéros d'urgence (`libelle`, `numero`) | `/api/numeros-urgence` (mêmes 5 routes) |
-| Personnel de garde (`libelle`, `serviceId`, `metierId`) | `/api/personnel` (mêmes 5 routes) |
+| Personnel de garde (`username` = identifiant AD ; libellé, service et métier lus dans l'AD) | `GET /api/personnel`, `GET /api/personnel/{id}`, `POST /api/personnel`, `PUT\|PATCH /api/personnel/{id}`, `DELETE /api/personnel/{id}` ; `GET /api/personnel/services` et `/metiers` listent les valeurs en usage, pour les filtres |
+| Annuaire du personnel, **lu dans l'AD, lecture seule** | `GET /api/personnes` (recherche, voir plus bas), `GET /api/personnes/services`, `GET /api/personnes/metiers`, `GET /api/personnes/{identifiant AD}` |
 | Numéros de garde (`numero`, `type`, `personnelDeGardeId`) | `/api/numeros-garde` (mêmes 5 routes) |
 | Gardes (`personnelDeGardeId`, `dateDebut`, `dateFin` en `AAAA-MM-JJ`, bornes incluses) | `/api/gardes` (mêmes 5 routes) ; `GET /api/gardes?date=AAAA-MM-JJ` ne renvoie que les gardes couvrant ce jour (la « garde en cours » de l'interface) |
+| Recherche dans l'annuaire AD, pour choisir un personnel de garde (JWT admin, `q` de 2 à 50 caractères) | `GET /api/ad/recherche?q=dupont` : 20 comptes au plus, `[{ username, prenom, nom, email, libelle }]` |
 | Traces (journal d'audit, lecture seule) | `GET /api/traces`, `GET /api/traces/{id}` |
 | Connexion | `POST /api/login` |
 
 - `PUT` et `PATCH` sont équivalents : seuls les champs envoyés sont modifiés.
-- Les relations se donnent par identifiant (`serviceId`, `metierId`, `personnelDeGardeId`) ; un id inconnu renvoie 400.
-- Supprimer un service ou un métier encore utilisé renvoie 409. Supprimer un personnel supprime ses numéros de garde et ses gardes.
+- Les relations se donnent par identifiant (`personnelDeGardeId`) ; un id inconnu renvoie 400.
+- À la création d'un personnel de garde, on envoie l'identifiant AD : un identifiant inconnu renvoie 422, un identifiant déjà enregistré 422, un AD injoignable 503. Le libellé n'est pas modifiable à la main.
+- Supprimer un personnel supprime ses numéros de garde et ses gardes.
 - Le détail de chaque route (accès, champs, codes de retour) est dans le commentaire au-dessus de la route,
   dans `src/Controller/Api/`.
 
@@ -119,8 +121,8 @@ L'API répond alors sur `http://127.0.0.1:8000/api`.
 
 | Paramètre | Description |
 |---|---|
-| `q` | Mots recherchés (50 caractères max), insensible à la casse, dans le libellé du personnel, le service, sa localisation et le métier (pour l'annuaire du personnel `/api/personnes` : nom, prénom, e-mail, téléphone, DECT, service, localisation et métier). Tous les mots doivent correspondre. |
-| `serviceId`, `metierId` | Filtres par identifiant |
+| `q` | Mots recherchés (50 caractères max), insensible à la casse, dans l'identifiant, le libellé, le service et le métier du personnel de garde. Pour `/api/personnes` (annuaire AD, insensible aussi aux accents) : identifiant, nom, prénom, e-mail, service, poste et numéros |
+| `serviceId`, `metierId` | Filtres sur la valeur exacte du service et du métier (libellés de l'AD ; listes dans `/api/personnel/services` et `/metiers`, ou `/api/personnes/services` et `/metiers` pour l'annuaire) |
 | `page` | Numéro de page (défaut 1) |
 | `limit` | Taille de page (défaut 20, max 100) |
 
@@ -139,7 +141,7 @@ Erreur de validation (422) :
 { "message": "Données invalides.", "errors": { "libelle": ["This value should not be blank."] } }
 ```
 
-Autres codes : 400 (JSON ou type invalide, relation inconnue), 401, 404, 409, 500 (message générique hors mode debug).
+Autres codes : 400 (JSON ou type invalide, relation inconnue), 401, 404, 409, 503 (AD injoignable), 500 (message générique hors mode debug).
 
 ## Tests
 
@@ -156,39 +158,15 @@ la connexion LDAP est testée avec un faux annuaire, sans réseau.
 
 ```mermaid
 erDiagram
-    SERVICE ||--o{ PERSONNE : "regroupe"
-    METIER ||--o{ PERSONNE : "qualifie"
-    SERVICE ||--o{ PERSONNEL_DE_GARDE : "regroupe"
-    METIER ||--o{ PERSONNEL_DE_GARDE : "qualifie"
     PERSONNEL_DE_GARDE ||--o{ NUMERO_GARDE : "joignable par"
     PERSONNEL_DE_GARDE ||--o{ GARDE : "assure"
 
-    SERVICE {
-        int id PK
-        string libelle
-        string localisation
-    }
-    METIER {
-        int id PK
-        string libelle
-        string nom
-        string prenom
-    }
-    PERSONNE {
-        int id PK
-        string nom
-        string prenom
-        string email "facultatif"
-        string telephone "facultatif"
-        string dect "facultatif"
-        int service_id FK
-        int metier_id FK
-    }
     PERSONNEL_DE_GARDE {
         int id PK
-        string libelle
-        int service_id FK
-        int metier_id FK
+        string username "compte AD, unique"
+        string libelle "copie de l'AD"
+        string service "copie de l'AD (department)"
+        string metier "copie de l'AD (title)"
     }
     NUMERO_GARDE {
         int id PK
@@ -215,10 +193,30 @@ erDiagram
     }
 ```
 
-- `PERSONNE` alimente l'annuaire du personnel, `PERSONNEL_DE_GARDE` la page de garde : ce sont deux tables distinctes, sans lien entre elles.
-- Supprimer un personnel de garde supprime ses numéros et ses gardes. Supprimer un service ou un métier encore utilisé est refusé (409).
+- L'annuaire du personnel n'a pas de table : il est lu en direct dans l'AD (voir « Annuaire du personnel et AD »). `PERSONNEL_DE_GARDE` est la seule population enregistrée en base, pour la page de garde.
+- Supprimer un personnel de garde supprime ses numéros et ses gardes.
 - `NUMERO_URGENCE` et `TRACE` sont autonomes. `TRACE` est le journal des actions d'administration ; le compte y est conservé en texte, car les comptes viennent de l'AD.
-- `METIER` porte `nom` et `prenom` (colonnes issues d'un ancien champ `username`, voir la migration `Version20260925094737`) ; ils sont obligatoires mais n'ont pas de rôle fonctionnel.
+- **Tout vient de l'AD.** `PERSONNEL_DE_GARDE` ne stocke que l'identifiant du compte (`username`) ; le libellé « Prénom Nom », le service (`department`) et le métier (`title`) sont lus dans l'AD à la création, puis recopiés en base pour que la recherche, le tri et les filtres restent en SQL (voir `app:ldap:sync`). Il n'y a plus de tables `service` ni `metier`.
+- Écarts avec le MCD de base : les entités `SERVICE` et `METIER` (et `username` sur `METIER`) n'existent plus, le service et le métier étant des libellés lus dans l'AD ; `GARDE` a été ajoutée ; l'annuaire du personnel vient de l'AD ; `SERVICE.numero_service` n'est pas implémenté.
+
+## Annuaire du personnel et AD
+
+**Annuaire du personnel (`/api/personnes`).** Il n'est pas saisi : il est lu dans l'AD, avec le compte technique `LDAP_SEARCH_DN`, sur les comptes **actifs** de l'unité d'organisation `LDAP_DIRECTORY_DN` (comptes désactivés exclus). Pour chaque compte : nom, prénom, e-mail, service (`department`), poste (`title`) et **tous les numéros, quel que soit leur type** (`telephoneNumber`, `mobile`, `ipPhone`, `pager`, fax et leurs variantes « autres » ; un même numéro n'apparaît qu'une fois ; `homePhone`, numéro personnel, n'est jamais lu). Les modifier = modifier l'AD.
+
+L'AD est lu une fois puis gardé **en cache une heure** (`DirectoryCatalog`) : la recherche, les filtres, le tri et la pagination se font en mémoire, sans requête LDAP à chaque frappe (environ 0,4 s pour charger 1 700 comptes, puis quelques millisecondes). Les changements de l'AD apparaissent au plus tard après une heure, ou tout de suite après `app:ldap:sync`.
+
+> L'annuaire est **public** (lecture sans connexion), comme avant : noms, e-mails et numéros de ~1 700 personnes sont donc visibles de tout poste qui atteint l'application. À restreindre (JWT) si l'application sort du réseau interne.
+
+**Personnel de garde.** Seule population enregistrée en base : on saisit un identifiant AD (avec recherche dans l'annuaire AD), le libellé « Prénom Nom », le service et le métier sont lus dans l'AD et recopiés. Pour que les changements faits ensuite dans l'AD (mariage, etc.) s'y retrouvent :
+
+```bash
+php bin/console app:ldap:sync --dry-run   # affiche ce qui changerait
+php bin/console app:ldap:sync             # met à jour les libellés et rafraîchit l'annuaire du personnel
+```
+
+Un compte introuvable dans l'AD (supprimé ou renommé) est signalé mais **jamais supprimé** de la base. À planifier (tâche planifiée Windows ou cron) en production, par exemple chaque nuit.
+
+La migration `Version20261001170000` conserve les services et métiers déjà saisis (copiés en texte sur `personnel_de_garde`) avant de supprimer les tables `service` et `metier` ; ils sont remplacés par ceux de l'AD au prochain `app:ldap:sync`. Les migrations `Version20261001122453` (identifiant AD sur `personnel_de_garde`) et `Version20261001150000` (suppression de la table `personne`) refusent de s'appliquer si ces tables contiennent des lignes : les vider d'abord, puis ressaisir le personnel de garde par son identifiant AD.
 
 ## Structure
 

@@ -40,7 +40,8 @@ export function peopleOnDuty(gardes) {
 export function groupByService(people) {
   const groups = new Map()
   for (const p of people) {
-    const g = groups.get(p.service.id) ?? { id: p.service.id, libelle: p.service.libelle, people: [] }
+    const service = p.service ?? { id: '', libelle: 'Sans service' }
+    const g = groups.get(service.id) ?? { id: service.id, libelle: service.libelle, people: [] }
     g.people.push(p)
     groups.set(g.id, g)
   }
