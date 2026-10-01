@@ -560,3 +560,7 @@ td.actions button { padding: 4px 12px; font-size: .85rem; } /* boutons de ligne 
 .stat-link { text-decoration: none; color: var(--text); border-left: 3px solid var(--accent); }
 .stat-link:hover { border-color: var(--accent); box-shadow: 0 0 16px var(--glow); }
 .dash-note { font-size: .85rem; }
+
+/* Barres de défilement masquées : le défilement (molette, tactile, clavier) reste actif */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
