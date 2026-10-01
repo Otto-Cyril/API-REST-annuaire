@@ -3,15 +3,21 @@ import Pagination from '../components/Pagination.vue'
 import CallNumber from '../components/CallNumber.vue'
 import DirectoryFilters from '../components/DirectoryFilters.vue'
 import Icon from '../components/Icon.vue'
-import { ref, onMounted } from 'vue'
+import Highlight from '../components/Highlight.vue'
+import { ref, computed, onMounted } from 'vue'
 import { get } from '../api'
 import { today, peopleOnDuty } from '../garde'
+import { withServiceHeaders } from '../list'
 import { useAuth } from '../stores/auth'
 import { useDirectory } from '../composables/useDirectory'
 
 const auth = useAuth()
 const { filters, page, list, meta, overall, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
   useDirectory('/personnel', { requireFilter: true })
+
+// Tri par service : un en-tête par service dans la liste
+const rows = computed(() => (filters.sort === 'service' ? withServiceHeaders(list.value, (p) => p.service) : list.value))
+const showCount = computed(() => hasFilters.value && !error.value && !(loading.value && !list.value.length))
 
 // Nombre de personnes de garde aujourd'hui (null tant que non chargé ou si l'API échoue : la carte est alors masquée)
 const onDutyCount = ref(null)
@@ -42,11 +48,10 @@ onMounted(async () => {
     :has-filters="hasFilters"
     :service-label="serviceLabel"
     :metier-label="metierLabel"
+    :count="showCount ? countLabel : ''"
     @reset="resetFilters"
     @submit="load"
   />
-
-  <p v-if="hasFilters && !error && !(loading && !list.length)" class="result-count muted" aria-live="polite">{{ countLabel }}</p>
 
   <div v-if="error" class="error-box" role="alert">
     <p class="error">{{ error }}</p>
@@ -72,12 +77,14 @@ onMounted(async () => {
   </div>
 
   <ul v-else class="cards" :class="{ busy: loading }">
-    <li v-for="p in list" :key="p.id" class="card person">
+    <template v-for="p in rows" :key="p.id">
+    <li v-if="p.header" class="group-title">{{ p.label }}</li>
+    <li v-else class="card person">
       <div class="person-body">
-        <RouterLink :to="{ name: 'fiche', params: { id: p.id } }" class="card-title">{{ p.libelle }}</RouterLink>
+        <RouterLink :to="{ name: 'fiche', params: { id: p.id } }" class="card-title"><Highlight :text="p.libelle" :query="filters.q" /></RouterLink>
         <div class="tags">
-          <span class="tag tag-service">{{ p.service.libelle }}</span>
-          <span class="tag tag-metier">{{ p.metier.libelle }}</span>
+          <span class="tag tag-service"><Highlight :text="p.service.libelle" :query="filters.q" /></span>
+          <span class="tag tag-metier"><Highlight :text="p.metier.libelle" :query="filters.q" /></span>
           <span v-if="p.service.localisation" class="muted tag-loc">{{ p.service.localisation }}</span>
         </div>
       </div>
@@ -92,6 +99,7 @@ onMounted(async () => {
         ><Icon name="edit" /></RouterLink>
       </div>
     </li>
+    </template>
   </ul>
 
   <Pagination v-if="hasFilters" :page="page" :total-pages="meta.totalPages" :total="meta.total" @change="page = $event" />

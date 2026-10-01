@@ -3,14 +3,21 @@ import Pagination from '../components/Pagination.vue'
 import CallNumber from '../components/CallNumber.vue'
 import DirectoryFilters from '../components/DirectoryFilters.vue'
 import Icon from '../components/Icon.vue'
+import Highlight from '../components/Highlight.vue'
 import { useAuth } from '../stores/auth'
 import { useDirectory } from '../composables/useDirectory'
+import { withServiceHeaders } from '../list'
+import { computed } from 'vue'
 
 const auth = useAuth()
 const { filters, page, list, meta, services, metiers, loading, error, hasFilters, resetFilters, serviceLabel, metierLabel, countLabel, load } =
   useDirectory('/personnes', { requireFilter: true })
 
 const fullName = (p) => `${p.prenom} ${p.nom}`
+
+// Tri par service : un en-tête par service dans la liste
+const rows = computed(() => (filters.sort === 'service' ? withServiceHeaders(list.value, (p) => p.service) : list.value))
+const showCount = computed(() => hasFilters.value && !error.value && !(loading.value && !list.value.length))
 </script>
 
 <template>
@@ -23,11 +30,10 @@ const fullName = (p) => `${p.prenom} ${p.nom}`
     :has-filters="hasFilters"
     :service-label="serviceLabel"
     :metier-label="metierLabel"
+    :count="showCount ? countLabel : ''"
     @reset="resetFilters"
     @submit="load"
   />
-
-  <p v-if="hasFilters && !error && !(loading && !list.length)" class="result-count muted" aria-live="polite">{{ countLabel }}</p>
 
   <div v-if="error" class="error-box" role="alert">
     <p class="error">{{ error }}</p>
@@ -53,12 +59,14 @@ const fullName = (p) => `${p.prenom} ${p.nom}`
   </div>
 
   <ul v-else class="cards" :class="{ busy: loading }">
-    <li v-for="p in list" :key="p.id" class="card person">
+    <template v-for="p in rows" :key="p.id">
+    <li v-if="p.header" class="group-title">{{ p.label }}</li>
+    <li v-else class="card person">
       <div class="person-body">
-        <span class="card-title">{{ fullName(p) }}</span>
+        <span class="card-title"><Highlight :text="fullName(p)" :query="filters.q" /></span>
         <div class="tags">
-          <span class="tag tag-service">{{ p.service.libelle }}</span>
-          <span class="tag tag-metier">{{ p.metier.libelle }}</span>
+          <span class="tag tag-service"><Highlight :text="p.service.libelle" :query="filters.q" /></span>
+          <span class="tag tag-metier"><Highlight :text="p.metier.libelle" :query="filters.q" /></span>
           <span v-if="p.service.localisation" class="muted tag-loc">{{ p.service.localisation }}</span>
         </div>
       </div>
@@ -77,6 +85,7 @@ const fullName = (p) => `${p.prenom} ${p.nom}`
         ><Icon name="edit" /></RouterLink>
       </div>
     </li>
+    </template>
   </ul>
 
   <Pagination v-if="hasFilters" :page="page" :total-pages="meta.totalPages" :total="meta.total" @change="page = $event" />

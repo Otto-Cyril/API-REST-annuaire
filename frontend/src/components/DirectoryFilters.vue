@@ -11,6 +11,7 @@ defineProps({
   hasFilters: Boolean,
   serviceLabel: String,
   metierLabel: String,
+  count: { type: String, default: '' }, // « 15 résultats », affiché à droite de la ligne des filtres actifs
 })
 defineEmits(['reset', 'submit'])
 </script>
@@ -41,5 +42,6 @@ defineEmits(['reset', 'submit'])
     <button v-if="serviceLabel" type="button" class="filter-pill" @click="filters.serviceId = ''">{{ serviceLabel }} <Icon name="close" /></button>
     <button v-if="metierLabel" type="button" class="filter-pill" @click="filters.metierId = ''">{{ metierLabel }} <Icon name="close" /></button>
     <button type="button" class="link" @click="$emit('reset')">Tout effacer</button>
+    <span v-if="count" class="result-count muted" aria-live="polite">{{ count }}</span>
   </div>
 </template>
